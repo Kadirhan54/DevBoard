@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:18
+    container_name: devboard-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kado
+      POSTGRES_DB: devboarddb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - devboard-network
+
+  api:
+    build:
+      context: .
+      dockerfile: src/DevBoard.Api/Dockerfile
+    container_name: devboard-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DevBoardDatabase: "Host=db;Port=5432;Database=devboarddb;Username=postgres;Password=kado"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - devboard-network
+
+networks:
+  devboard-network:
+
+volumes:
+  pgdata:

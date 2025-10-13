@@ -1,0 +1,15 @@
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\bin\Debug\net8.0\DevBoard.Infrastructure.deps.json
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\bin\Debug\net8.0\DevBoard.Infrastructure.dll
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\bin\Debug\net8.0\DevBoard.Infrastructure.pdb
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\bin\Debug\net8.0\DevBoard.Domain.dll
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\bin\Debug\net8.0\DevBoard.Domain.pdb
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.AssemblyInfo.cs
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.B42DD99D.Up2Date
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.dll
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\refint\DevBoard.Infrastructure.dll
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.pdb
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\ref\DevBoard.Infrastructure.dll
