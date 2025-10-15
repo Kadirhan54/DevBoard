@@ -98,7 +98,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/BoardDto"
+                    "$ref": "#/components/schemas/SimpleBoardDto"
                   }
                 }
               },
@@ -106,7 +106,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/BoardDto"
+                    "$ref": "#/components/schemas/SimpleBoardDto"
                   }
                 }
               },
@@ -114,7 +114,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/BoardDto"
+                    "$ref": "#/components/schemas/SimpleBoardDto"
                   }
                 }
               }
@@ -151,17 +151,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardDto"
+                  "$ref": "#/components/schemas/SimpleBoardDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardDto"
+                  "$ref": "#/components/schemas/SimpleBoardDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardDto"
+                  "$ref": "#/components/schemas/SimpleBoardDto"
                 }
               }
             }
@@ -191,17 +191,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardDto"
+                  "$ref": "#/components/schemas/SimpleBoardDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardDto"
+                  "$ref": "#/components/schemas/SimpleBoardDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardDto"
+                  "$ref": "#/components/schemas/SimpleBoardDto"
                 }
               }
             }
@@ -264,6 +264,29 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Projects/{projectId}/boards": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -525,35 +548,6 @@
         },
         "additionalProperties": false
       },
-      "BoardDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "taskItems": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TaskItem"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "CreateBoardDto": {
         "type": "object",
         "properties": {
@@ -672,6 +666,24 @@
             "nullable": true
           },
           "tenantId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SimpleBoardDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
             "type": "string",
             "nullable": true
           }

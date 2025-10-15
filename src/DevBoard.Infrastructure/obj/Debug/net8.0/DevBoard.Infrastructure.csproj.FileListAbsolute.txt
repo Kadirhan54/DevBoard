@@ -8,6 +8,7 @@ C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.AssemblyInfoInputs.cache
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.AssemblyInfo.cs
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.sourcelink.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.B42DD99D.Up2Date
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\DevBoard.Infrastructure.dll
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Infrastructure\obj\Debug\net8.0\refint\DevBoard.Infrastructure.dll

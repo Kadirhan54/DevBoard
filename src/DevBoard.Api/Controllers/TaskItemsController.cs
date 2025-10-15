@@ -29,33 +29,14 @@ namespace DevBoard.Api.Controllers
                 .AsNoTracking()
                 .ToListAsync();
 
-            var response = taskItems.Select(taskItem => new TaskItemResponseDto
-            {
-                Id = taskItem.Id,
-                Name = taskItem.Name,
-                Description = taskItem.Description,
-                Status = (int)taskItem.Status,
-                DueDate = taskItem.DueDate,
-                BoardId = taskItem.BoardId,
-                Board = taskItem.Board == null
-                    ? null
-                    : new SimpleBoardDto
-                    {
-                        Id = taskItem.Board.Id,
-                        Name = taskItem.Board.Name
-                    },
-                AssignedUserId = taskItem.AssignedUser == null
-                    ? (Guid?)null
-                    : Guid.Parse(taskItem.AssignedUser.Id),
-                AssignedUser = taskItem.AssignedUser == null
-                    ? null
-                    : new SimpleUserDto
-                    {
-                        Id = Guid.Parse(taskItem.AssignedUser.Id),
-                        UserName = taskItem.AssignedUser.UserName!,
-                        Email = taskItem.AssignedUser.Email!
-                    }
-            }).ToList();
+            var response = taskItems.Select(taskItem => new TaskItemResponseDto(
+                taskItem.Id,
+                taskItem.Name,
+                taskItem.Description,
+                (int)taskItem.Status,
+                taskItem.DueDate,
+                taskItem.BoardId
+            )).ToList();
 
             return Ok(response);
         }
@@ -95,27 +76,16 @@ namespace DevBoard.Api.Controllers
             await _context.Tasks.AddAsync(taskItem);
             await _context.SaveChangesAsync();
 
-            return Ok(new TaskItemResponseDto
-            {
-                Id = taskItem.Id,
-                Name = taskItem.Name,
-                Description = taskItem.Description,
-                Status = (int)taskItem.Status,
-                DueDate = taskItem.DueDate,
-                BoardId = taskItem.BoardId,
-                Board = taskItem.Board == null ? null : new SimpleBoardDto
-                {
-                    Id = taskItem.Board.Id,
-                    Name = taskItem.Board.Name
-                },
-                AssignedUserId = taskItem.AssignedUser == null ? (Guid?)null : Guid.Parse(taskItem.AssignedUser.Id),
-                AssignedUser = taskItem.AssignedUser == null ? null : new SimpleUserDto
-                {
-                    Id = Guid.Parse(taskItem.AssignedUser.Id),
-                    UserName = taskItem.AssignedUser.UserName!,
-                    Email = taskItem.AssignedUser.Email!
-                }
-            });
+            var result = new TaskItemResponseDto(
+                taskItem.Id,
+                taskItem.Name,
+                taskItem.Description,
+                (int)taskItem.Status,
+                taskItem.DueDate,
+                taskItem.BoardId
+            );
+
+            return CreatedAtAction(nameof(GetById), new { id = taskItem.Id }, result);
         }
 
         // ✅ GET api/taskitems/{id}
@@ -130,27 +100,14 @@ namespace DevBoard.Api.Controllers
             if (taskItem == null)
                 return NotFound("Task item not found.");
 
-            return Ok(new TaskItemResponseDto
-            {
-                Id = taskItem.Id,
-                Name = taskItem.Name,
-                Description = taskItem.Description,
-                Status = (int)taskItem.Status,
-                DueDate = taskItem.DueDate,
-                BoardId = taskItem.BoardId,
-                Board = taskItem.Board == null ? null : new SimpleBoardDto
-                {
-                    Id = taskItem.Board.Id,
-                    Name = taskItem.Board.Name
-                },
-                AssignedUserId = taskItem.AssignedUser == null ? (Guid?)null : Guid.Parse(taskItem.AssignedUser.Id),
-                AssignedUser = taskItem.AssignedUser == null ? null : new SimpleUserDto
-                {
-                    Id = Guid.Parse(taskItem.AssignedUser.Id),
-                    UserName = taskItem.AssignedUser.UserName!,
-                    Email = taskItem.AssignedUser.Email!
-                }
-            });
+            return Ok(new TaskItemResponseDto(
+                taskItem.Id,
+                taskItem.Name,
+                taskItem.Description,
+                (int)taskItem.Status,
+                taskItem.DueDate,
+                taskItem.BoardId
+            ));
         }
 
         // ✅ DELETE api/taskitems/{id}

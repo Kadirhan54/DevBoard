@@ -20,16 +20,14 @@ namespace DevBoard.Api.Controllers
 
         // GET: api/boards
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BoardDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<SimpleBoardDto>>> GetAll()
         {
             var boards = await _context.Boards
                 .AsNoTracking()
-                .Select(b => new BoardDto(
+                .Select(b => new SimpleBoardDto(
                     b.Id,
                     b.Name,
-                    b.Description,
-                    b.ProjectId,
-                    b.Tasks
+                    b.Description
                 ))
                 .ToListAsync();
 
@@ -38,7 +36,7 @@ namespace DevBoard.Api.Controllers
 
         // POST: api/boards
         [HttpPost]
-        public async Task<ActionResult<BoardDto>> Create([FromBody] CreateBoardDto dto)
+        public async Task<ActionResult<SimpleBoardDto>> Create([FromBody] CreateBoardDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -60,12 +58,10 @@ namespace DevBoard.Api.Controllers
             await _context.Boards.AddAsync(board);
             await _context.SaveChangesAsync();
 
-            var result = new BoardDto(
+            var result = new SimpleBoardDto(
                 board.Id,
                 board.Name,
-                board.Description,
-                board.ProjectId,
-                board.Tasks
+                board.Description
             );
 
             return CreatedAtAction(nameof(GetById), new { id = board.Id }, result);
@@ -73,17 +69,15 @@ namespace DevBoard.Api.Controllers
 
         // GET: api/boards/{id}
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<BoardDto>> GetById(Guid id)
+        public async Task<ActionResult<SimpleBoardDto>> GetById(Guid id)
         {
             var board = await _context.Boards
                 .AsNoTracking()
                 .Where(b => b.Id == id)
-                .Select(b => new BoardDto(
+                .Select(b => new SimpleBoardDto(
                     b.Id,
                     b.Name,
-                    b.Description,
-                    b.ProjectId,
-                    b.Tasks
+                    b.Description
                 ))
                 .FirstOrDefaultAsync();
 

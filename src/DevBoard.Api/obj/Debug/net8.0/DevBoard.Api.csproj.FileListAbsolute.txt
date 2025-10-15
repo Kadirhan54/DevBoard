@@ -1,3 +1,12 @@
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.csproj.AssemblyReference.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.AssemblyInfoInputs.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.AssemblyInfo.cs
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.csproj.CoreCompileInputs.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.sourcelink.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\appsettings.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\DevBoard.Api.staticwebassets.endpoints.json
@@ -107,14 +116,6 @@ C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\DevBoard.I
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\DevBoard.Application.pdb
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\DevBoard.Infrastructure.pdb
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\bin\Debug\net8.0\DevBoard.Domain.pdb
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.csproj.AssemblyReference.cache
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\rpswa.dswa.cache.json
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.AssemblyInfoInputs.cache
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.AssemblyInfo.cs
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.csproj.CoreCompileInputs.cache
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\DevBoard.Api.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Api\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json

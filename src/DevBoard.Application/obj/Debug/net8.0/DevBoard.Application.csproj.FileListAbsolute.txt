@@ -8,6 +8,7 @@ C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\De
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\DevBoard.Application.AssemblyInfoInputs.cache
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\DevBoard.Application.AssemblyInfo.cs
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\DevBoard.Application.csproj.CoreCompileInputs.cache
+C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\DevBoard.Application.sourcelink.json
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\DevBoard.94B75C0D.Up2Date
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\DevBoard.Application.dll
 C:\Users\kado\source\repos\DevBoard\src\DevBoard.Application\obj\Debug\net8.0\refint\DevBoard.Application.dll

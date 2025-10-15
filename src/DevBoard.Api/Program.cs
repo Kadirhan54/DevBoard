@@ -2,6 +2,7 @@
 using DevBoard.Application.Interfaces;
 using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Contexts.Application;
+using DevBoard.Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -49,14 +50,23 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAll",
+//        builder => builder
+//            .AllowAnyMethod()
+//            .AllowCredentials()
+//            .SetIsOriginAllowed((host) => true)
+//            .AllowAnyHeader());
+//});
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder => builder
-            .AllowAnyMethod()
-            .AllowCredentials()
-            .SetIsOriginAllowed((host) => true)
-            .AllowAnyHeader());
+    options.AddPolicy("AllowFrontend",
+        policy => policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -107,21 +117,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
+    // Create a service scope so we can access scoped services
     using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var services = scope.ServiceProvider;
 
-    dbContext.Database.Migrate();
+    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    // 1️⃣ Apply migrations before seeding
+    await dbContext.Database.MigrateAsync();
 
+    // 2️⃣ Seed mock data if DB is empty
+    await DbSeeder.SeedAsync(dbContext);
+
+    // 3️⃣ Ensure roles exist
     if (!await roleManager.RoleExistsAsync(Roles.Admin))
-    {
         await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
-    }
+
     if (!await roleManager.RoleExistsAsync(Roles.Member))
-    {
         await roleManager.CreateAsync(new IdentityRole(Roles.Member));
-    }
 }
 
 app.UseHttpsRedirection();
@@ -129,6 +143,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseCors("AllowFrontend");
 app.MapControllers();
 
 app.Run();

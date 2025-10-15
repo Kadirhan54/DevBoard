@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -59,6 +60,39 @@ namespace DevBoard.Api.Controllers
             );
 
             return Ok(result);
+        }
+
+        [HttpGet("{projectId:guid}/boards")]
+        public async Task<IActionResult> GetProjectWithBoardsByProject(Guid projectId)
+        {
+            var project = await _context.Projects
+                .AsNoTracking()
+                .Where(p => p.Id == projectId)
+                .Select(p => new ProjectWithBoardsDto(
+                    p.Id,
+                    p.Name,
+                    p.Description,
+                    p.TenantId.ToString(),
+                    p.Boards.Select(b => new BoardWithTasksDto(
+                        b.Id,
+                        b.Name,
+                        b.Description,
+                        b.Tasks.Select(t => new TaskItemResponseDto(
+                            t.Id,
+                            t.Name,
+                            t.Description,
+                            (int)t.Status,
+                            t.DueDate,
+                            t.BoardId
+                        ))
+                    ))
+                ))
+                .FirstOrDefaultAsync();
+
+            if (project is null)
+                return NotFound($"Project with ID {projectId} not found.");
+
+            return Ok(project);
         }
 
         // GET: api/projects/{id}
