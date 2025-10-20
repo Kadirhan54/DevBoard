@@ -5,7 +5,8 @@ namespace DevBoard.Application.Dtos
     public record SimpleBoardDto(
         Guid Id, 
         string Name, 
-        string Description
+        string Description,
+        Guid TenantId
     );
 
     public record CreateBoardDto(
@@ -19,6 +20,7 @@ namespace DevBoard.Application.Dtos
         Guid Id,
         string Name,
         string Description,
+        Guid TenantId,
         IEnumerable<TaskItemResponseDto> Tasks
     );
     public record DeleteBoardDto(Guid Id);

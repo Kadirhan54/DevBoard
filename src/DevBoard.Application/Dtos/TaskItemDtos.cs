@@ -20,7 +20,8 @@ namespace DevBoard.Application.Dtos
         string? Description,
         int Status,
         DateTime? DueDate,
-        Guid BoardId
+        Guid BoardId,
+        Guid TenantId
     );
 
 }

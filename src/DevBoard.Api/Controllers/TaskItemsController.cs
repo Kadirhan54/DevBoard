@@ -35,7 +35,8 @@ namespace DevBoard.Api.Controllers
                 taskItem.Description,
                 (int)taskItem.Status,
                 taskItem.DueDate,
-                taskItem.BoardId
+                taskItem.BoardId,
+                taskItem.TenantId
             )).ToList();
 
             return Ok(response);
@@ -82,7 +83,8 @@ namespace DevBoard.Api.Controllers
                 taskItem.Description,
                 (int)taskItem.Status,
                 taskItem.DueDate,
-                taskItem.BoardId
+                taskItem.BoardId,
+                taskItem.TenantId
             );
 
             return CreatedAtAction(nameof(GetById), new { id = taskItem.Id }, result);
@@ -106,7 +108,8 @@ namespace DevBoard.Api.Controllers
                 taskItem.Description,
                 (int)taskItem.Status,
                 taskItem.DueDate,
-                taskItem.BoardId
+                taskItem.BoardId,
+                taskItem.TenantId
             ));
         }
 

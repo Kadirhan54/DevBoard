@@ -1,10 +1,10 @@
 ﻿using DevBoard.Domain.Entities;
 using DevBoard.Domain.Enums;
 using DevBoard.Infrastructure.Contexts.Application;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace DevBoard.Infrastructure.Seed
@@ -13,13 +13,12 @@ namespace DevBoard.Infrastructure.Seed
     {
         public static async Task SeedAsync(ApplicationDbContext dbContext)
         {
-            // Ensure database exists
             await dbContext.Database.EnsureCreatedAsync();
 
-            // Only seed if DB is empty
-            if (!dbContext.Projects.Any())
+            if (!await dbContext.Projects.IgnoreQueryFilters().AnyAsync())
             {
                 var projects = GetMockProjects();
+
                 await dbContext.Projects.AddRangeAsync(projects);
                 await dbContext.SaveChangesAsync();
             }
@@ -116,4 +115,5 @@ namespace DevBoard.Infrastructure.Seed
             };
         }
     }
+
 }

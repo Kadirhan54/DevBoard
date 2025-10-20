@@ -4,6 +4,7 @@ using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Consumers;
 using DevBoard.Infrastructure.Contexts.Application;
 using DevBoard.Infrastructure.Seed;
+using DevBoard.Infrastructure.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -89,10 +90,16 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DevBoardDatabase")));
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+{
+    var tenantProvider = serviceProvider.GetRequiredService<ITenantProvider>();
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DevBoardDatabase"));
+    options.EnableSensitiveDataLogging(); // optional
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -136,26 +143,38 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
 
-    // Create a service scope so we can access scoped services
-    using var scope = app.Services.CreateScope();
+// ✅ Apply migrations and seed outside of HTTP request handling
+using (var scope = app.Services.CreateScope())
+{
     var services = scope.ServiceProvider;
 
-    var dbContext = services.GetRequiredService<ApplicationDbContext>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    try
+    {
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-    // 1️⃣ Apply migrations before seeding
-    await dbContext.Database.MigrateAsync();
+        // 1️⃣ Apply migrations first
+        await dbContext.Database.MigrateAsync();
 
-    // 2️⃣ Seed mock data if DB is empty
-    await DbSeeder.SeedAsync(dbContext);
+        // 2️⃣ Seed mock data (TenantId will be set automatically)
+        await DbSeeder.SeedAsync(dbContext);
 
-    // 3️⃣ Ensure roles exist
-    if (!await roleManager.RoleExistsAsync(Roles.Admin))
-        await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+        // 3️⃣ Ensure roles exist
+        if (!await roleManager.RoleExistsAsync(Roles.Admin))
+            await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
 
-    if (!await roleManager.RoleExistsAsync(Roles.Member))
-        await roleManager.CreateAsync(new IdentityRole(Roles.Member));
+        if (!await roleManager.RoleExistsAsync(Roles.Member))
+            await roleManager.CreateAsync(new IdentityRole(Roles.Member));
+    }
+    catch (Exception ex)
+    {
+        // Optional: log exception
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        throw; // fail fast
+    }
 }
 
 app.UseHttpsRedirection();

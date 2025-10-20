@@ -92,13 +92,15 @@ namespace DevBoard.Api.Controllers
                         b.Id,
                         b.Name,
                         b.Description,
+                        b.TenantId,
                         b.Tasks.Select(t => new TaskItemResponseDto(
                             t.Id,
                             t.Name,
                             t.Description,
                             (int)t.Status,
                             t.DueDate,
-                            t.BoardId
+                            t.BoardId,
+                            t.TenantId
                         ))
                     ))
                 ))

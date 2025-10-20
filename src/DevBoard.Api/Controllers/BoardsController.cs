@@ -27,7 +27,8 @@ namespace DevBoard.Api.Controllers
                 .Select(b => new SimpleBoardDto(
                     b.Id,
                     b.Name,
-                    b.Description
+                    b.Description,
+                    b.TenantId
                 ))
                 .ToListAsync();
 
@@ -61,7 +62,8 @@ namespace DevBoard.Api.Controllers
             var result = new SimpleBoardDto(
                 board.Id,
                 board.Name,
-                board.Description
+                board.Description,
+                board.TenantId
             );
 
             return CreatedAtAction(nameof(GetById), new { id = board.Id }, result);
@@ -77,7 +79,8 @@ namespace DevBoard.Api.Controllers
                 .Select(b => new SimpleBoardDto(
                     b.Id,
                     b.Name,
-                    b.Description
+                    b.Description,
+                    b.TenantId
                 ))
                 .FirstOrDefaultAsync();
 

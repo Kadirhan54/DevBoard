@@ -42,7 +42,7 @@ services:
     container_name: devboard-api
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DevBoardDatabase: "Host=db;Port=5432;Database=devboarddb;Username=postgres;Password=kado"
+      ConnectionStrings__DevBoardDatabase: "Host=db;Port=5432;Database=devboarddb;Username=postgres;Password=kado;Include Error Detail=true"
       RabbitMQ__Host: "rabbitmq"
       RabbitMQ__Username: "guest"
       RabbitMQ__Password: "guest"
