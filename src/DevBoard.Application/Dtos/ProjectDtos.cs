@@ -21,5 +21,9 @@ namespace DevBoard.Application.Dtos
         IEnumerable<BoardWithTasksDto> Boards
     );
 
-    public record CreateProjectDto(string Name, string Description, string TenantId);
+    public record CreateProjectDto(
+        string Name, 
+        string Description, 
+        string TenantId
+    );
 }

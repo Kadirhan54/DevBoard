@@ -1,8 +1,10 @@
 ﻿using DevBoard.Api.Services;
 using DevBoard.Application.Interfaces;
 using DevBoard.Domain.Identity;
+using DevBoard.Infrastructure.Consumers;
 using DevBoard.Infrastructure.Contexts.Application;
 using DevBoard.Infrastructure.Seed;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +13,42 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
+
+builder.Services.AddMassTransit(x =>
+{
+    // Scan the correct assembly
+    x.AddConsumers(typeof(ProjectCreatedConsumer).Assembly);
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitHost = configuration["RabbitMQ:Host"] ?? "rabbitmq";
+        var virtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/";
+        var username = configuration["RabbitMQ:Username"] ?? "guest";
+        var password = configuration["RabbitMQ:Password"] ?? "guest";
+
+        cfg.Host(rabbitHost, virtualHost, h =>  
+        {
+            h.Username(username);
+            h.Password(password);
+        });
+
+        //cfg.ReceiveEndpoint("project-created-queue", e =>
+        //{
+        //    e.ConfigureConsumer<ProjectCreatedConsumer>(context);
+        //});
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // Add services to the container.
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -49,16 +79,6 @@ builder.Services.AddSwaggerGen(options =>
             }
         });
 });
-
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowAll",
-//        builder => builder
-//            .AllowAnyMethod()
-//            .AllowCredentials()
-//            .SetIsOriginAllowed((host) => true)
-//            .AllowAnyHeader());
-//});
 
 builder.Services.AddCors(options =>
 {

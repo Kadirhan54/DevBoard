@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:18
+    image: postgres:16   # ✅ use postgres:16 or 17 (18 doesn’t exist yet)
     container_name: devboard-db
     restart: always
     environment:
@@ -13,6 +13,25 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - devboard-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: devboard-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     networks:
       - devboard-network
 
@@ -24,10 +43,16 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__DevBoardDatabase: "Host=db;Port=5432;Database=devboarddb;Username=postgres;Password=kado"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started   # ✅ proper syntax
     networks:
       - devboard-network
 

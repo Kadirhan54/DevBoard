@@ -1,11 +1,14 @@
 ﻿using DevBoard.Application.Dtos;
 using DevBoard.Domain.Entities;
+using DevBoard.Domain.Events;
 using DevBoard.Infrastructure.Contexts.Application;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Xml.Linq;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,10 +20,11 @@ namespace DevBoard.Api.Controllers
     {
 
         private readonly ApplicationDbContext _context;
-
-        public ProjectsController(ApplicationDbContext context)
+        private readonly IPublishEndpoint _publishEndpoint;
+        public ProjectsController(ApplicationDbContext context, IPublishEndpoint publishEndpoint)
         {
             _context = context;
+            _publishEndpoint = publishEndpoint;
         }
 
         [HttpGet]
@@ -42,8 +46,12 @@ namespace DevBoard.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateProjectDto dto)
         {
+
+            var projectId = Guid.NewGuid();
+
             var project = new Project
             {
+                Id = projectId,
                 Name = dto.Name,
                 Description = dto.Description,
                 TenantId = Guid.Parse(dto.TenantId)
@@ -59,7 +67,14 @@ namespace DevBoard.Api.Controllers
                 project.TenantId.ToString()
             );
 
-            return Ok(result);
+            await _publishEndpoint.Publish<ProjectCreated>(new
+            {
+                ProjectId = projectId,
+                Name = dto.Name,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            return Ok(new { ProjectId = projectId, Result = result });
         }
 
         [HttpGet("{projectId:guid}/boards")]

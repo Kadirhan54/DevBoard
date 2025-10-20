@@ -5,7 +5,15 @@ using DevBoard.Domain.Enums;
 
 namespace DevBoard.Application.Dtos
 {
-    public record CreateTaskItemDto(string Name, string Description, TaskItemStatus Status, Guid BoardId, DateTime? DueDate,  string? AssignedUserId);
+    public record CreateTaskItemDto(
+        string Name, 
+        string Description, 
+        TaskItemStatus Status, 
+        Guid BoardId, 
+        DateTime? DueDate,  
+        string? AssignedUserId
+    );
+
     public record TaskItemResponseDto(
         Guid Id,
         string Name,
@@ -13,14 +21,6 @@ namespace DevBoard.Application.Dtos
         int Status,
         DateTime? DueDate,
         Guid BoardId
-    );
-
-
-
-    public record SimpleUserDto(
-        Guid Id,
-        string UserName,
-        string Email
     );
 
 }
