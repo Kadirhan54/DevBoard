@@ -9,6 +9,6 @@ namespace DevBoard.Domain.Common
     public interface ICreatedByEntity
     {
         public Guid? CreatedByUserId { get; set; }
-        public DateTimeOffset? CreatedOn { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

@@ -30,6 +30,8 @@ namespace DevBoard.Infrastructure.Contexts.Application
         public DbSet<Project> Projects => Set<Project>();
         public DbSet<Board> Boards => Set<Board>();
         public DbSet<TaskItem> Tasks => Set<TaskItem>();
+        public DbSet<Tenant> Tenants => Set<Tenant>();
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -41,7 +43,7 @@ namespace DevBoard.Infrastructure.Contexts.Application
             builder.Entity<Project>().HasQueryFilter(p => TenantId == Guid.Empty || p.TenantId == TenantId);
             builder.Entity<Board>().HasQueryFilter(b => TenantId == Guid.Empty || b.TenantId == TenantId);
             builder.Entity<TaskItem>().HasQueryFilter(t => TenantId == Guid.Empty || t.TenantId == TenantId);
-
+            builder.Entity<ApplicationUser>().HasQueryFilter(u => u.TenantId == _tenantProvider.GetTenantId());
 
             builder.Entity<ApplicationUser>(entity =>
             {
@@ -53,7 +55,30 @@ namespace DevBoard.Infrastructure.Contexts.Application
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            SetTenantAndAudit();
+            //SetTenantAndAudit();
+            //return await base.SaveChangesAsync(cancellationToken);
+
+            var tenantId = _tenantProvider.GetTenantId();
+
+            // If no tenant context (e.g., seeding or system admin), skip assignment
+            if (tenantId == Guid.Empty)
+                return await base.SaveChangesAsync(cancellationToken);
+
+            foreach (var entry in ChangeTracker.Entries<ITenantEntity>())
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    // Set tenant ID if not already set
+                    if (entry.Entity.TenantId == Guid.Empty)
+                        entry.Entity.TenantId = tenantId;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    // Prevent changing TenantId after creation
+                    entry.Property(e => e.TenantId).IsModified = false;
+                }
+            }
+
             return await base.SaveChangesAsync(cancellationToken);
         }
 
@@ -70,7 +95,7 @@ namespace DevBoard.Infrastructure.Contexts.Application
                     // Set CreatedOn if supported
                     if (entry.Entity is ICreatedByEntity createdEntity)
                     {
-                        createdEntity.CreatedOn = DateTime.UtcNow;
+                        createdEntity.CreatedAt = DateTime.UtcNow;
                     }
 
                     // Set TenantId if entity implements ITenantEntity

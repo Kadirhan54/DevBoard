@@ -7,15 +7,13 @@ using System.Threading.Tasks;
 
 namespace DevBoard.Domain.Entities
 {
-    public class Board : EntityBase<Guid>, ITenantEntity, ICreatedByEntity
+    public class Board : EntityBase<Guid>, ITenantEntity
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        
-        public Guid TenantId { get; set; }
 
-        public Guid? CreatedByUserId { get; set; }
-        public DateTimeOffset? CreatedOn { get; set; }
+        public Guid TenantId { get; set; }  // redundant but required for filtering
+        public Tenant Tenant { get; set; }
 
 
         // Foreign key to Project

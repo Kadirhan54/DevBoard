@@ -4,18 +4,15 @@ using DevBoard.Domain.Identity;
 
 namespace DevBoard.Domain.Entities
 {
-    public class TaskItem : EntityBase<Guid>, ITenantEntity, ICreatedByEntity
+    public class TaskItem : EntityBase<Guid>, ITenantEntity
     {
         public string Name { get; set; }
         public string Description { get; set; }
         public TaskItemStatus Status { get; set; }
         public DateTime? DueDate { get; set; }
-
+        
         public Guid TenantId { get; set; }
-
-        public Guid? CreatedByUserId { get; set; }
-        public DateTimeOffset? CreatedOn { get; set; }
-
+        public Tenant Tenant { get; set; }
 
         public Guid BoardId { get; set; }
         public Board Board { get; set; } = null!;

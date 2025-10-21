@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace DevBoard.Application.Dtos
 {
-    public record RegisterDto(string Email, string Password, bool EnableNotifications);
+    public record RegisterDto(string Email, string Password, bool EnableNotifications, string OrganizationName, string? Domain);
     public record LoginDto(string Email, string Password);
 }

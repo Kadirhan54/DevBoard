@@ -1,10 +1,12 @@
 ﻿using DevBoard.Application.Dtos;
 using DevBoard.Application.Interfaces;
+using DevBoard.Domain.Entities;
 using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Contexts.Application;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -52,39 +54,58 @@ namespace DevBoard.Api.Controllers
 
             var token = _tokenService.CreateToken(user);
 
-            return Ok(new { Token = token });
+            return Ok(new
+            {
+                Token = token,
+                TenantId = user.TenantId
+            });
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] RegisterDto registerDto)
         {
-            var isUserNull = await _userManager.FindByEmailAsync(registerDto.Email);
-
-            if (isUserNull != null)
-            {
+            var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+            if (existingUser != null)
                 return BadRequest("User already exists");
+
+            // 👇 Find or create tenant
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Name == registerDto.OrganizationName);
+
+            if (tenant == null)
+            {
+                tenant = new Tenant
+                {
+                    Name = registerDto.OrganizationName,
+                    Domain = registerDto.Domain
+                };
+                _context.Tenants.Add(tenant);
+                await _context.SaveChangesAsync();
             }
 
             var user = new ApplicationUser
             {
                 UserName = registerDto.Email,
                 Email = registerDto.Email,
-                EnableNotifications = registerDto.EnableNotifications
+                EnableNotifications = registerDto.EnableNotifications,
+                TenantId = tenant.Id
             };
 
-            IdentityResult identityResult = await _userManager.CreateAsync(user, registerDto.Password);
-            if (!identityResult.Succeeded)
-            {
-                return BadRequest(identityResult.Errors);
-            }
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-            IdentityResult addToRoleResult = await _userManager.AddToRoleAsync(user, Roles.Member);
-            if (!addToRoleResult.Succeeded)
-            {
-                return BadRequest(addToRoleResult.Errors);
-            }
+            await _userManager.AddToRoleAsync(user, Roles.Member);
 
-            return Ok(user);
+            var token = _tokenService.CreateToken(user);
+
+            return Ok(new
+            {
+                Message = "Registration successful",
+                Token = token,
+                TenantId = tenant.Id,
+                Organization = tenant.Name
+            });
         }
 
     }
