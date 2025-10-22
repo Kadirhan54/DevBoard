@@ -131,6 +131,32 @@ namespace DevBoard.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TenantInvitations",
+                schema: "public",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    InvitedEmail = table.Column<string>(type: "text", nullable: false),
+                    InviteToken = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantInvitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantInvitations_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalSchema: "public",
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetUserClaims",
                 schema: "identity",
                 columns: table => new
@@ -382,6 +408,12 @@ namespace DevBoard.Infrastructure.Migrations
                 schema: "public",
                 table: "Tasks",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantInvitations_TenantId",
+                schema: "public",
+                table: "TenantInvitations",
+                column: "TenantId");
         }
 
         /// <inheritdoc />
@@ -409,6 +441,10 @@ namespace DevBoard.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Tasks",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "TenantInvitations",
                 schema: "public");
 
             migrationBuilder.DropTable(

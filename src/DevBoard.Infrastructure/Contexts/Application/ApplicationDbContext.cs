@@ -1,5 +1,6 @@
 ﻿using DevBoard.Domain.Common;
 using DevBoard.Domain.Entities;
+using DevBoard.Domain.Entities.DevBoard.Domain.Entities;
 using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
@@ -32,7 +33,7 @@ namespace DevBoard.Infrastructure.Contexts.Application
         public DbSet<Board> Boards => Set<Board>();
         public DbSet<TaskItem> Tasks => Set<TaskItem>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
-
+        public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

@@ -12,6 +12,7 @@ namespace DevBoard.Application.Dtos
 
     public record SimpleUserDto (
         Guid Id,
-        string Email
+        string Email,
+        Guid TenantId
     );
 }

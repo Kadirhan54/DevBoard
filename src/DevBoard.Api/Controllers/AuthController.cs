@@ -38,7 +38,12 @@ namespace DevBoard.Api.Controllers
         [HttpGet("GetUsers")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users.ToListAsync();
+            var users = await _context.Users.Select(u => new SimpleUserDto(
+                    Guid.Parse(u.Id),
+                    u.Email,
+                    u.TenantId
+                )
+           ).ToListAsync();
             return Ok(users);
         }
 
