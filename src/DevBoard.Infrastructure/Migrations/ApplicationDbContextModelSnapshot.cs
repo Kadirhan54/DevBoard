@@ -17,7 +17,7 @@ namespace DevBoard.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("identity")
+                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "8.0.20")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -55,7 +55,7 @@ namespace DevBoard.Infrastructure.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("Boards", "identity");
+                    b.ToTable("Boards", "public");
                 });
 
             modelBuilder.Entity("DevBoard.Domain.Entities.Project", b =>
@@ -85,7 +85,7 @@ namespace DevBoard.Infrastructure.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("Projects", "identity");
+                    b.ToTable("Projects", "public");
                 });
 
             modelBuilder.Entity("DevBoard.Domain.Entities.TaskItem", b =>
@@ -131,7 +131,7 @@ namespace DevBoard.Infrastructure.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("Tasks", "identity");
+                    b.ToTable("Tasks", "public");
                 });
 
             modelBuilder.Entity("DevBoard.Domain.Entities.Tenant", b =>
@@ -152,7 +152,7 @@ namespace DevBoard.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tenant", "identity");
+                    b.ToTable("Tenants", "public");
                 });
 
             modelBuilder.Entity("DevBoard.Domain.Identity.ApplicationUser", b =>
@@ -421,7 +421,7 @@ namespace DevBoard.Infrastructure.Migrations
                     b.HasOne("DevBoard.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Users")
                         .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Tenant");

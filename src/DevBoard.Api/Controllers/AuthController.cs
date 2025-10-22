@@ -35,6 +35,13 @@ namespace DevBoard.Api.Controllers
             _tokenService = tokenService;
         }
 
+        [HttpGet("GetUsers")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var users = await _context.Users.ToListAsync();
+            return Ok(users);
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginDto loginDto)
         {
@@ -65,20 +72,13 @@ namespace DevBoard.Api.Controllers
         public async Task<IActionResult> Register([FromForm] RegisterDto registerDto)
         {
             var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
-            if (existingUser != null)
-                return BadRequest("User already exists");
+            if (existingUser != null) return BadRequest("User already exists");
 
-            // 👇 Find or create tenant
-            var tenant = await _context.Tenants
-                .FirstOrDefaultAsync(t => t.Name == registerDto.OrganizationName);
-
+            // Find or create tenant
+            var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Name == registerDto.OrganizationName);
             if (tenant == null)
             {
-                tenant = new Tenant
-                {
-                    Name = registerDto.OrganizationName,
-                    Domain = registerDto.Domain
-                };
+                tenant = new Tenant { Name = registerDto.OrganizationName, Domain = registerDto.Domain };
                 _context.Tenants.Add(tenant);
                 await _context.SaveChangesAsync();
             }
@@ -87,15 +87,18 @@ namespace DevBoard.Api.Controllers
             {
                 UserName = registerDto.Email,
                 Email = registerDto.Email,
-                EnableNotifications = registerDto.EnableNotifications,
-                TenantId = tenant.Id
+                TenantId = tenant.Id,
+                EnableNotifications = registerDto.EnableNotifications
             };
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
+            if (!result.Succeeded) return BadRequest(result.Errors);
 
             await _userManager.AddToRoleAsync(user, Roles.Member);
+
+            // Attach to tenant navigation property
+            tenant.Users.Add(user);
+            await _context.SaveChangesAsync();
 
             var token = _tokenService.CreateToken(user);
 
@@ -107,6 +110,7 @@ namespace DevBoard.Api.Controllers
                 Organization = tenant.Name
             });
         }
+
 
     }
 }

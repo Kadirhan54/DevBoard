@@ -156,20 +156,22 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
         // 1️⃣ Apply migrations first
         await dbContext.Database.MigrateAsync();
 
-        // 2️⃣ Seed mock data (TenantId will be set automatically)
-        await DbSeeder.SeedAsync(dbContext);
-
-        // 3️⃣ Ensure roles exist
+        // 2️⃣ Ensure roles exist
         if (!await roleManager.RoleExistsAsync(Roles.Admin))
             await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
 
         if (!await roleManager.RoleExistsAsync(Roles.Member))
             await roleManager.CreateAsync(new IdentityRole(Roles.Member));
+
+        // 3️⃣ Seed mock data
+        await DbSeeder.SeedAsync(dbContext, userManager);
+
     }
     catch (Exception ex)
     {
