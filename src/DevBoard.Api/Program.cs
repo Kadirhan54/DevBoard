@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -113,9 +114,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 .AddSignInManager<SignInManager<ApplicationUser>>()
 .AddDefaultTokenProviders();
 
-// JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -124,6 +123,9 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
+    var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
 
@@ -135,7 +137,8 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        RoleClaimType = ClaimTypes.Role
     };
 });
 
@@ -159,19 +162,12 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        // 1️⃣ Apply migrations first
+        // Apply migrations first
         await dbContext.Database.MigrateAsync();
 
-        // 2️⃣ Ensure roles exist
-        if (!await roleManager.RoleExistsAsync(Roles.Admin))
-            await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+        var loggerFactory = services.GetRequiredService<ILoggerFactory>();
 
-        if (!await roleManager.RoleExistsAsync(Roles.Member))
-            await roleManager.CreateAsync(new IdentityRole(Roles.Member));
-
-        // 3️⃣ Seed mock data
-        await DbSeeder.SeedAsync(dbContext, userManager);
-
+        await DbSeeder.SeedAsync(dbContext, userManager, roleManager, loggerFactory);
     }
     catch (Exception ex)
     {

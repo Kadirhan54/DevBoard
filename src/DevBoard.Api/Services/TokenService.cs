@@ -1,5 +1,6 @@
 ﻿using DevBoard.Application.Interfaces;
 using DevBoard.Domain.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,18 +12,18 @@ namespace DevBoard.Api.Services
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TokenService(IConfiguration configuration)
+        public TokenService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public string CreateToken(ApplicationUser user)
+        public async Task<string> CreateTokenAsync(ApplicationUser user)
         {
-            var jwtSettings = _configuration.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+            var userRoles = await _userManager.GetRolesAsync(user);
 
-            // 🧩 Include TenantId claim
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
@@ -34,14 +35,16 @@ namespace DevBoard.Api.Services
                 new Claim("tenantId", user.TenantId.ToString() ?? string.Empty),
             };
 
-            //// ✅ Add tenantId if available
-            //if (user.TenantId != Guid.Empty)
-            //    claims.Add(new Claim("tenantId", user.TenantId.ToString()));
+            // Add roles
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+                // Optional: duplicate under "role" for convenience
+                claims.Add(new Claim("role", role));
+            }
 
-            // Optionally add user roles if needed
-            // if (roles != null)
-            //     claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

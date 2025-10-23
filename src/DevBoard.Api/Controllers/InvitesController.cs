@@ -27,6 +27,7 @@ namespace DevBoard.Api.Controllers
             _tokenService = tokenService;
         }
 
+        [Authorize(Roles = Roles.Admin)]
         [HttpPost("send")]
         public async Task<IActionResult> SendInvite([FromBody] string invitedEmail)
         {
@@ -70,7 +71,7 @@ namespace DevBoard.Api.Controllers
                 return BadRequest("Invalid or expired invite token.");
 
 
-            // TODO : Implement if user is already signed In ????
+            // TODO : Implement if user is already registered ????
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
                 return BadRequest("User with this email already exists.");
@@ -93,7 +94,7 @@ namespace DevBoard.Api.Controllers
             invitation.IsUsed = true;
             await _context.SaveChangesAsync();
 
-            var token = _tokenService.CreateToken(user);
+            var token = _tokenService.CreateTokenAsync(user);
 
             return Ok(new
             {

@@ -64,7 +64,7 @@ namespace DevBoard.Api.Controllers
                 return BadRequest("Invalid Credentials");
             }
 
-            var token = _tokenService.CreateToken(user);
+            var token = _tokenService.CreateTokenAsync(user);
 
             return Ok(new
             {
@@ -105,7 +105,7 @@ namespace DevBoard.Api.Controllers
             tenant.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            var token = _tokenService.CreateToken(user);
+            var token = _tokenService.CreateTokenAsync(user);
 
             return Ok(new
             {

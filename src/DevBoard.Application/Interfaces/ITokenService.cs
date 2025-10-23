@@ -9,6 +9,6 @@ namespace DevBoard.Application.Interfaces
 {
     public interface ITokenService
     {
-        public string CreateToken(ApplicationUser user);
+        public Task<string> CreateTokenAsync(ApplicationUser user);
     }
 }
