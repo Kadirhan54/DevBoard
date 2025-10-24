@@ -64,13 +64,15 @@ namespace DevBoard.Api.Controllers
                 return BadRequest("Invalid Credentials");
             }
 
-            var token = _tokenService.CreateTokenAsync(user);
+            var token = await _tokenService.CreateTokenAsync(user);
 
-            return Ok(new
-            {
-                Token = token,
-                TenantId = user.TenantId
-            });
+            var result = new LoginResultDto(
+                token,
+                user.Email,
+                "Member"
+                );
+
+            return Ok(result);
         }
 
         [HttpPost("register")]
