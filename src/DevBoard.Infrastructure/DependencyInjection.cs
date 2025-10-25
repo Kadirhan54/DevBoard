@@ -1,5 +1,6 @@
 ﻿// Infrastructure/DependencyInjection.cs
 using DevBoard.Infrastructure.Messaging;
+using DevBoard.Infrastructure.Messaging.Configuration;
 using DevBoard.Infrastructure.Messaging.Consumers;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
@@ -37,11 +38,40 @@ namespace DevBoard.Infrastructure
                     });
 
                     // Configure retry policy with exponential backoff
-                    cfg.UseMessageRetry(r => r.Incremental(
-                        retryLimit: rabbitMqSettings.RetryCount,
-                        initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
-                        intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
-                    ));
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Incremental(
+                            retryLimit: rabbitMqSettings.RetryCount,
+                            initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
+                            intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
+                        );
+
+                        //
+                        // TODO : Monitor this behavior 
+                        //
+
+                        // Ignore (don’t retry) explicitly non-retryable exceptions
+                        foreach (var exceptionType in ExceptionFilters.NonRetryableExceptions)
+                        {
+                            var ignoreMethod = typeof(IRetryConfigurator)
+                                .GetMethods()
+                                .FirstOrDefault(m => m.Name == "Ignore" && m.IsGenericMethod && m.GetParameters().Length == 0);
+                            ignoreMethod?.MakeGenericMethod(exceptionType).Invoke(r, null);
+                        }
+
+                        //
+                        // TODO : Monitor this behavior 
+                        //
+                        
+                        // Handle (force retry) explicitly retryable exceptions
+                        foreach (var exceptionType in ExceptionFilters.RetryableExceptions)
+                        {
+                            var handleMethod = typeof(IRetryConfigurator)
+                                .GetMethods()
+                                .FirstOrDefault(m => m.Name == "Handle" && m.IsGenericMethod && m.GetParameters().Length == 0);
+                            handleMethod?.MakeGenericMethod(exceptionType).Invoke(r, null);
+                        }
+                    });
 
                     // Configure dead-letter queue
                     cfg.ReceiveEndpoint("devboard-error-queue", e =>

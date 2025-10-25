@@ -25,7 +25,7 @@ namespace DevBoard.Infrastructure.Messaging.Consumers
             var @event = context.Message;
 
             _logger.LogInformation(
-                "Processing TaskItemCreatedEvent {EventId} for Tenant {TenantId}, TaskItem {TaskItemId}",
+                "Processing TaskItemCreatedEvent with Id: {EventId} for Tenant Id: {TenantId}, TaskItem Id: {TaskItemId}",
                 @event.EventId, @event.TenantId, @event.TaskItemId);
 
             try
