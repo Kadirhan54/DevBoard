@@ -33,9 +33,9 @@ namespace DevBoard.Api.Controllers
                    t.Id,
                    t.Name,
                    t.Domain
-                   ));
+                   )).ToList();
 
-            return Ok(result);
+            return Ok(new ResultDto<List<TenantResultDto>>(true, "Tenants retrieved successfully", result));
         }
     }
 }
