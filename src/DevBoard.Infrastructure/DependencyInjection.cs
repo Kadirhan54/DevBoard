@@ -1,7 +1,11 @@
 ﻿// Infrastructure/DependencyInjection.cs
+using DevBoard.Application.Services;
 using DevBoard.Infrastructure.Messaging;
 using DevBoard.Infrastructure.Messaging.Configuration;
-using DevBoard.Infrastructure.Messaging.Consumers;
+using DevBoard.Infrastructure.Messaging.Consumers.BoardConsumers;
+using DevBoard.Infrastructure.Messaging.Consumers.ProjectConsumers;
+using DevBoard.Infrastructure.Messaging.Consumers.TaskItemConsumers;
+using DevBoard.Infrastructure.Services;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +19,8 @@ namespace DevBoard.Infrastructure
         public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // ... existing services ...
+            services.AddScoped<ITenantProvider, TenantProvider>();
+            services.AddScoped<IEventPublisher, EventPublisher>();
 
             // RabbitMQ Settings
             var rabbitMqSettings = configuration.GetSection("RabbitMq").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
@@ -23,11 +29,25 @@ namespace DevBoard.Infrastructure
             // MassTransit Configuration
             services.AddMassTransit(x =>
             {
-                // Register all consumers
+                // Register all TaskItem consumers
                 x.AddConsumer<TaskItemCreatedConsumer>();
+                x.AddConsumer<TaskItemUpdatedConsumer>();
+                x.AddConsumer<TaskItemDeletedConsumer>();
+                x.AddConsumer<TaskItemStatusChangedConsumer>();
+                // TODO
                 //x.AddConsumer<TaskItemAssignedConsumer>();
+
+                // Register all Board consumers
+                x.AddConsumer<BoardCreatedConsumer>();
+                x.AddConsumer<BoardUpdatedConsumer>();
+                x.AddConsumer<BoardDeletedConsumer>();
+
+                // Register all Project consumers
+                x.AddConsumer<ProjectCreatedConsumer>();
+                x.AddConsumer<ProjectUpdatedConsumer>();
+                x.AddConsumer<ProjectDeletedConsumer>();
+                // TODO
                 //x.AddConsumer<ProjectMemberAddedConsumer>();
-                // Add more consumers as needed
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -80,35 +100,69 @@ namespace DevBoard.Infrastructure
                         // This is the dead-letter queue - no consumers
                     });
 
-                    // Configure consumers with DLQ
+                    // TaskItem endpoints
                     cfg.ReceiveEndpoint("task-item-created", e =>
                     {
                         e.ConfigureConsumer<TaskItemCreatedConsumer>(context);
-                        e.UseMessageRetry(r => r.Incremental(
-                            retryLimit: rabbitMqSettings.RetryCount,
-                            initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
-                            intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
-                        ));
                     });
 
+                    cfg.ReceiveEndpoint("task-item-updated", e =>
+                    {
+                        e.ConfigureConsumer<TaskItemUpdatedConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("task-item-deleted", e =>
+                    {
+                        e.ConfigureConsumer<TaskItemDeletedConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("task-item-status-changed", e =>
+                    {
+                        e.ConfigureConsumer<TaskItemStatusChangedConsumer>(context);
+                    });
+
+                    // TODO
                     //cfg.ReceiveEndpoint("task-item-assigned", e =>
                     //{
                     //    e.ConfigureConsumer<TaskItemAssignedConsumer>(context);
-                    //    e.UseMessageRetry(r => r.Incremental(
-                    //        retryLimit: rabbitMqSettings.RetryCount,
-                    //        initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
-                    //        intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
-                    //    ));
                     //});
 
+                    // Board endpoints
+                    cfg.ReceiveEndpoint("board-created", e =>
+                    {
+                        e.ConfigureConsumer<BoardCreatedConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("board-updated", e =>
+                    {
+                        e.ConfigureConsumer<BoardUpdatedConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("board-deleted", e =>
+                    {
+                        e.ConfigureConsumer<BoardDeletedConsumer>(context);
+                    });
+
+                    // Project endpoints
+                    cfg.ReceiveEndpoint("project-created", e =>
+                    {
+                        e.ConfigureConsumer<ProjectCreatedConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("project-updated", e =>
+                    {
+                        e.ConfigureConsumer<ProjectUpdatedConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("project-deleted", e =>
+                    {
+                        e.ConfigureConsumer<ProjectDeletedConsumer>(context);
+                    });
+
+                    // TODO
                     //cfg.ReceiveEndpoint("project-member-added", e =>
                     //{
                     //    e.ConfigureConsumer<ProjectMemberAddedConsumer>(context);
-                    //    e.UseMessageRetry(r => r.Incremental(
-                    //        retryLimit: rabbitMqSettings.RetryCount,
-                    //        initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
-                    //        intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
-                    //    ));
                     //});
 
                     cfg.ConfigureEndpoints(context);

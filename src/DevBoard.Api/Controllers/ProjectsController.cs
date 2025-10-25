@@ -1,4 +1,5 @@
 ﻿using DevBoard.Application.Dtos;
+using DevBoard.Application.Services;
 using DevBoard.Domain.Entities;
 using DevBoard.Domain.Events;
 using DevBoard.Infrastructure.Contexts.Application;
@@ -21,6 +22,7 @@ namespace DevBoard.Api.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly IPublishEndpoint _publishEndpoint;
+
         public ProjectsController(ApplicationDbContext context, IPublishEndpoint publishEndpoint)
         {
             _context = context;

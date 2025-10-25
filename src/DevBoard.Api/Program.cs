@@ -20,8 +20,6 @@ var configuration = builder.Configuration;
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantProvider, TenantProvider>();
-
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -70,8 +68,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>

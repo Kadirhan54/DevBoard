@@ -5,7 +5,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace DevBoard.Infrastructure.Messaging.Consumers
+namespace DevBoard.Infrastructure.Messaging.Consumers.TaskItemConsumers
 {
     public class TaskItemCreatedConsumer : IConsumer<TaskItemCreatedEvent>
     {

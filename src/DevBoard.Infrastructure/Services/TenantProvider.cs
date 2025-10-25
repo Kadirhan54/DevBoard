@@ -7,11 +7,6 @@ using System.Threading.Tasks;
 
 namespace DevBoard.Infrastructure.Services
 {
-    public interface ITenantProvider
-    {
-        Guid GetTenantId();
-    }
-
     public class TenantProvider : ITenantProvider
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
