@@ -1,0 +1,93 @@
+﻿// Infrastructure/DependencyInjection.cs
+using DevBoard.Infrastructure.Messaging;
+using DevBoard.Infrastructure.Messaging.Consumers;
+using MassTransit;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+//using MassTransit.Configuration;
+
+namespace DevBoard.Infrastructure
+{
+    public static class DependencyInjection
+    {
+        public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            // ... existing services ...
+
+            // RabbitMQ Settings
+            var rabbitMqSettings = configuration.GetSection("RabbitMq").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+            services.AddSingleton(rabbitMqSettings);
+
+            // MassTransit Configuration
+            services.AddMassTransit(x =>
+            {
+                // Register all consumers
+                x.AddConsumer<TaskItemCreatedConsumer>();
+                //x.AddConsumer<TaskItemAssignedConsumer>();
+                //x.AddConsumer<ProjectMemberAddedConsumer>();
+                // Add more consumers as needed
+
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    cfg.Host(rabbitMqSettings.Host, rabbitMqSettings.Port, rabbitMqSettings.VirtualHost, h =>
+                    {
+                        h.Username(rabbitMqSettings.Username);
+                        h.Password(rabbitMqSettings.Password);
+                    });
+
+                    // Configure retry policy with exponential backoff
+                    cfg.UseMessageRetry(r => r.Incremental(
+                        retryLimit: rabbitMqSettings.RetryCount,
+                        initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
+                        intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
+                    ));
+
+                    // Configure dead-letter queue
+                    cfg.ReceiveEndpoint("devboard-error-queue", e =>
+                    {
+                        e.ConfigureConsumeTopology = false;
+                        // This is the dead-letter queue - no consumers
+                    });
+
+                    // Configure consumers with DLQ
+                    cfg.ReceiveEndpoint("task-item-created", e =>
+                    {
+                        e.ConfigureConsumer<TaskItemCreatedConsumer>(context);
+                        e.UseMessageRetry(r => r.Incremental(
+                            retryLimit: rabbitMqSettings.RetryCount,
+                            initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
+                            intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
+                        ));
+                    });
+
+                    //cfg.ReceiveEndpoint("task-item-assigned", e =>
+                    //{
+                    //    e.ConfigureConsumer<TaskItemAssignedConsumer>(context);
+                    //    e.UseMessageRetry(r => r.Incremental(
+                    //        retryLimit: rabbitMqSettings.RetryCount,
+                    //        initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
+                    //        intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
+                    //    ));
+                    //});
+
+                    //cfg.ReceiveEndpoint("project-member-added", e =>
+                    //{
+                    //    e.ConfigureConsumer<ProjectMemberAddedConsumer>(context);
+                    //    e.UseMessageRetry(r => r.Incremental(
+                    //        retryLimit: rabbitMqSettings.RetryCount,
+                    //        initialInterval: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds),
+                    //        intervalIncrement: TimeSpan.FromSeconds(rabbitMqSettings.RetryIntervalSeconds)
+                    //    ));
+                    //});
+
+                    cfg.ConfigureEndpoints(context);
+                });
+
+                // Add tenant context filter
+                //x.AddPublishMessageFilter(typeof(TenantContextFilter<>));
+            });
+
+        }
+    }
+}

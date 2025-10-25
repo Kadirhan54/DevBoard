@@ -1,7 +1,10 @@
 ﻿using DevBoard.Application.Dtos;
+using DevBoard.Application.Events;
 using DevBoard.Domain.Entities;
 using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Contexts.Application;
+using DevBoard.Infrastructure.Services;
+using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +16,14 @@ namespace DevBoard.Api.Controllers
     public class TaskItemsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPublishEndpoint _publishEndpoint;
+        private readonly ITenantProvider _tenantProvider;
 
-        public TaskItemsController(ApplicationDbContext context)
+        public TaskItemsController(ApplicationDbContext context, IPublishEndpoint publishEndpoint, ITenantProvider tenantProvider)
         {
             _context = context;
+            _publishEndpoint = publishEndpoint;
+            _tenantProvider = tenantProvider;
         }
 
         // ✅ GET api/taskitems
@@ -46,6 +53,8 @@ namespace DevBoard.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateTaskItemDto dto)
         {
+            var tenantId = _tenantProvider.GetTenantId();
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -76,6 +85,18 @@ namespace DevBoard.Api.Controllers
 
             await _context.Tasks.AddAsync(taskItem);
             await _context.SaveChangesAsync();
+
+            // Publish event after successful save
+            await _publishEndpoint.Publish(new TaskItemCreatedEvent
+            {
+                TenantId = tenantId,
+                TaskItemId = taskItem.Id,
+                Title = taskItem.Name,
+                AssignedToUserId = taskItem.AssignedUserId != null
+                    ? Guid.Parse(taskItem.AssignedUserId)
+                    : null,
+                BoardId = taskItem.BoardId
+            });
 
             var result = new TaskItemResponseDto(
                 taskItem.Id,

@@ -13,36 +13,15 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using DevBoard.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-builder.Services.AddMassTransit(x =>
-{
-    // Scan the correct assembly
-    x.AddConsumers(typeof(ProjectCreatedConsumer).Assembly);
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        var rabbitHost = configuration["RabbitMQ:Host"] ?? "rabbitmq";
-        var virtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/";
-        var username = configuration["RabbitMQ:Username"] ?? "guest";
-        var password = configuration["RabbitMQ:Password"] ?? "guest";
-
-        cfg.Host(rabbitHost, virtualHost, h =>  
-        {
-            h.Username(username);
-            h.Password(password);
-        });
-
-        //cfg.ReceiveEndpoint("project-created-queue", e =>
-        //{
-        //    e.ConfigureConsumer<ProjectCreatedConsumer>(context);
-        //});
-
-        cfg.ConfigureEndpoints(context);
-    });
-});
 
 // Add services to the container.
 builder.Services.AddControllers()
