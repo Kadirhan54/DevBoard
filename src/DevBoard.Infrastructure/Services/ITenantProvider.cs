@@ -1,15 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DevBoard.Domain.Common;
+using DevBoard.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace DevBoard.Infrastructure.Services
 {
     public interface ITenantProvider
     {
         Guid GetTenantId();
+        Result<string> CheckResultPattern(); // ← Added for testing
     }
 
     public class TenantProvider : ITenantProvider
@@ -23,16 +21,18 @@ namespace DevBoard.Infrastructure.Services
 
         public Guid GetTenantId()
         {
-            // If no HTTP context, return a dummy tenant for seeding
             var tenantClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("tenantId");
             if (tenantClaim == null || string.IsNullOrWhiteSpace(tenantClaim?.Value))
             {
-                // return Guid.Empty (or a fixed "seed tenant" ID) during seeding/migrations
                 return Guid.Empty;
             }
 
             return Guid.Parse(tenantClaim.Value);
         }
-    }
 
+        public Result<string> CheckResultPattern()
+        {
+            return Result<string>.Failure("Tenant not found", ErrorType.NotFound);
+        }
+    }
 }

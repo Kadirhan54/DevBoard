@@ -1,5 +1,7 @@
 ﻿using DevBoard.Application.Dtos;
+using DevBoard.Domain.Enums;
 using DevBoard.Infrastructure.Contexts.Application;
+using DevBoard.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +14,12 @@ namespace DevBoard.Api.Controllers
     public class TenantsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ITenantProvider _tenantProvider;
 
-        public TenantsController(ApplicationDbContext context)
+        public TenantsController(ApplicationDbContext context, ITenantProvider tenantProvider)
         {
             _context = context;
+            _tenantProvider = tenantProvider;
         }
 
         [HttpGet("all")]
@@ -36,6 +40,24 @@ namespace DevBoard.Api.Controllers
                    )).ToList();
 
             return Ok(new ResultDto<List<TenantResultDto>>(true, "Tenants retrieved successfully", result));
+        }
+
+        [HttpGet("test-result")]
+        public IActionResult TestResult()
+        {
+            var result = _tenantProvider.CheckResultPattern();
+
+            if (result.IsSuccess)
+                return Ok(result.Value);
+
+            return result.ErrorType switch
+            {
+                ErrorType.NotFound => NotFound(result.Error),
+                ErrorType.Validation => BadRequest(result.Error),
+                ErrorType.Conflict => Conflict(result.Error),
+                ErrorType.Unauthorized => Unauthorized(result.Error),
+                _ => StatusCode(500, result.Error)
+            };
         }
     }
 }
