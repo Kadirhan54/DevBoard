@@ -15,5 +15,8 @@ namespace DevBoard.Domain.Identity
 
         // Navigation: tasks assigned to this user
         public ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
+
+        // Navigation comments made by this user
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>(); 
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DevBoard.Domain.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,5 +13,9 @@ namespace DevBoard.Domain.Entities
 
         public Guid TaskItemId { get; set; }
         public TaskItem TaskItem { get; set; } = null!;
+
+
+        public Guid CommentedByUserId { get; set; }
+        public ApplicationUser CommentedByUser { get; set; } = null!;
     }
 }

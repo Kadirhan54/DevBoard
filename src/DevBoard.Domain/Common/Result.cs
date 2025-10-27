@@ -23,7 +23,9 @@ namespace DevBoard.Domain.Common
             ErrorType = errorType;
         }
 
-        public static Result Success() => new(true, null);
+        // ✅ Explicitly passing ErrorType.None for clarity
+        public static Result Success() => new(true, null, ErrorType.None);
+
         public static Result Failure(string error, ErrorType errorType = ErrorType.Unexpected) =>
             new(false, error, errorType);
     }
@@ -38,7 +40,9 @@ namespace DevBoard.Domain.Common
             Value = value;
         }
 
-        public static Result<T> Success(T value) => new(value, true, null);
+        // ✅ Explicitly passing ErrorType.None for clarity
+        public static Result<T> Success(T value) => new(value, true, null, ErrorType.None);
+
         public static new Result<T> Failure(string error, ErrorType errorType = ErrorType.Unexpected) =>
             new(default, false, error, errorType);
     }

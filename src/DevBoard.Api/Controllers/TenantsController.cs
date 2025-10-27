@@ -1,8 +1,6 @@
 ﻿using DevBoard.Application.Dtos;
-using DevBoard.Domain.Enums;
 using DevBoard.Infrastructure.Contexts.Application;
 using DevBoard.Infrastructure.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -40,24 +38,6 @@ namespace DevBoard.Api.Controllers
                    )).ToList();
 
             return Ok(new ResultDto<List<TenantResultDto>>(true, "Tenants retrieved successfully", result));
-        }
-
-        [HttpGet("test-result")]
-        public IActionResult TestResult()
-        {
-            var result = _tenantProvider.CheckResultPattern();
-
-            if (result.IsSuccess)
-                return Ok(result.Value);
-
-            return result.ErrorType switch
-            {
-                ErrorType.NotFound => NotFound(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
-                ErrorType.Conflict => Conflict(result.Error),
-                ErrorType.Unauthorized => Unauthorized(result.Error),
-                _ => StatusCode(500, result.Error)
-            };
         }
     }
 }
