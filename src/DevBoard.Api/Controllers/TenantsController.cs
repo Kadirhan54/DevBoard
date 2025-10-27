@@ -29,13 +29,7 @@ namespace DevBoard.Api.Controllers
                 .AsNoTracking()
                 .ToListAsync();
 
-            var result = tenants.Select(t => new TenantResultDto(
-                   t.Id,
-                   t.Name,
-                   t.Domain
-                   )).ToList();
-
-            return Ok(new ResultDto<List<TenantResultDto>>(true, "Tenants retrieved successfully", result));
+            return Ok(tenants);
         }
     }
 }

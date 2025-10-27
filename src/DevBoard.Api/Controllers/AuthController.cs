@@ -54,25 +54,23 @@ namespace DevBoard.Api.Controllers
 
             if (user == null)
             {
-                return BadRequest(new ResultDto<string>(false, "User not Found!", null));
+                return BadRequest("User not Found!");
             }
 
             var loginResult = await _signInManager.PasswordSignInAsync(user, loginDto.Password, true, false);
 
             if (!loginResult.Succeeded)
             {
-                return BadRequest(new ResultDto<string>(false, "Invalid Credentials", null));
+                return BadRequest("Invalid Credentials");
             }
 
-            var token = await _tokenService.CreateTokenAsync(user);
+            var token = _tokenService.CreateTokenAsync(user);
 
-            var result = new LoginResultDto(
-                token,
-                user.Email,
-                "Member"  // Replace with actual role when ready
-                );
-
-            return Ok(new ResultDto<LoginResultDto>(true, "Login Successfull", result));
+            return Ok(new
+            {
+                Token = token,
+                TenantId = user.TenantId
+            });
         }
 
         [HttpPost("register")]
