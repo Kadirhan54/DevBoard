@@ -7,7 +7,6 @@ namespace DevBoard.Infrastructure.Services
     public interface ITenantProvider
     {
         Guid GetTenantId();
-        Result<string> CheckResultPattern(); // ← Added for testing
     }
 
     public class TenantProvider : ITenantProvider
@@ -28,11 +27,6 @@ namespace DevBoard.Infrastructure.Services
             }
 
             return Guid.Parse(tenantClaim.Value);
-        }
-
-        public Result<string> CheckResultPattern()
-        {
-            return Result<string>.Failure("Tenant not found", ErrorType.NotFound);
         }
     }
 }
