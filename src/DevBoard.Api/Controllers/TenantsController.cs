@@ -1,6 +1,6 @@
 ﻿using DevBoard.Application.Dtos;
 using DevBoard.Infrastructure.Contexts.Application;
-using Microsoft.AspNetCore.Http;
+using DevBoard.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -12,10 +12,12 @@ namespace DevBoard.Api.Controllers
     public class TenantsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ITenantProvider _tenantProvider;
 
-        public TenantsController(ApplicationDbContext context)
+        public TenantsController(ApplicationDbContext context, ITenantProvider tenantProvider)
         {
             _context = context;
+            _tenantProvider = tenantProvider;
         }
 
         [HttpGet("all")]
@@ -29,13 +31,7 @@ namespace DevBoard.Api.Controllers
                 .AsNoTracking()
                 .ToListAsync();
 
-            var result = tenants.Select(t => new TenantResultDto(
-                   t.Id,
-                   t.Name,
-                   t.Domain
-                   )).ToList();
-
-            return Ok(new ResultDto<List<TenantResultDto>>(true, "Tenants retrieved successfully", result));
+            return Ok(tenants);
         }
     }
 }
