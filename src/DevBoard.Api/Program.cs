@@ -33,6 +33,19 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "DevBoard API",
+        Version = "v1",
+        Description = "API for DevBoard project",
+        Contact = new OpenApiContact
+        {
+            Name = "DevBoard Team",
+            Email = "support@devboard.com"
+        }
+    });
+
+
     options.AddSecurityDefinition("Bearer", 
         new OpenApiSecurityScheme
         {
@@ -123,7 +136,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "DevBoard API v1");
+        c.RoutePrefix = string.Empty; // serve UI at root
+    });
 }
 
 // ✅ Apply migrations and seed outside of HTTP request handling

@@ -1,5 +1,6 @@
 ﻿using DevBoard.Application.Dtos;
 using DevBoard.Application.Events;
+using DevBoard.Application.Services;
 using DevBoard.Domain.Entities;
 using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Contexts.Application;
@@ -7,6 +8,7 @@ using DevBoard.Infrastructure.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevBoard.Api.Controllers
@@ -18,12 +20,16 @@ namespace DevBoard.Api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly ITenantProvider _tenantProvider;
+        private readonly IOutboxService _outboxService;
+        private readonly ILogger<TaskItemsController> _logger;
 
-        public TaskItemsController(ApplicationDbContext context, IPublishEndpoint publishEndpoint, ITenantProvider tenantProvider)
+        public TaskItemsController(ApplicationDbContext context, IPublishEndpoint publishEndpoint, ITenantProvider tenantProvider, IOutboxService outboxService, ILogger<TaskItemsController> logger)
         {
             _context = context;
             _publishEndpoint = publishEndpoint;
             _tenantProvider = tenantProvider;
+            _outboxService = outboxService;
+            _logger = logger;
         }
 
         // ✅ GET api/taskitems
@@ -71,44 +77,52 @@ namespace DevBoard.Api.Controllers
                     return BadRequest("Assigned user not found.");
             }
 
-            var taskItem = new TaskItem
+            // Start transaction
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                Name = dto.Name,
-                Description = dto.Description,
-                BoardId = dto.BoardId,
-                Board = board,
-                Status = dto.Status,
-                AssignedUserId = dto.AssignedUserId,
-                AssignedUser = user,
-                DueDate = dto.DueDate
-            };
+                var taskItem = new TaskItem
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    BoardId = dto.BoardId,
+                    Board = board,
+                    Status = dto.Status,
+                    AssignedUserId = dto.AssignedUserId,
+                    AssignedUser = user,
+                    DueDate = dto.DueDate,
+                    CreatedAt = DateTime.UtcNow,
+                };
 
-            await _context.Tasks.AddAsync(taskItem);
-            await _context.SaveChangesAsync();
+                // Save event to outbox (same transaction)
+                await _outboxService.SaveEventAsync(new TaskItemCreatedEvent
+                {
+                    TenantId = tenantId,
+                    TaskItemId = taskItem.Id,
+                    Title = taskItem.Name,
+                    AssignedToUserId = !string.IsNullOrEmpty(taskItem.AssignedUserId)
+                        ? Guid.Parse(taskItem.AssignedUserId)
+                        : null,
+                    BoardId = taskItem.BoardId
+                });
 
-            // Publish event after successful save
-            await _publishEndpoint.Publish(new TaskItemCreatedEvent
+                // Commit transaction (atomically saves both TaskItem and OutboxMessage)
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation(
+                    "TaskItem {TaskItemId} created for tenant {TenantId}",
+                    taskItem.Id, tenantId);
+
+                return CreatedAtAction(nameof(GetById), new { id = taskItem.Id }, taskItem);
+            }
+            catch (Exception ex)
             {
-                TenantId = tenantId,
-                TaskItemId = taskItem.Id,
-                Title = taskItem.Name,
-                AssignedToUserId = taskItem.AssignedUserId != null
-                    ? Guid.Parse(taskItem.AssignedUserId)
-                    : null,
-                BoardId = taskItem.BoardId
-            });
-
-            var result = new TaskItemResponseDto(
-                taskItem.Id,
-                taskItem.Name,
-                taskItem.Description,
-                (int)taskItem.Status,
-                taskItem.DueDate,
-                taskItem.BoardId,
-                taskItem.TenantId
-            );
-
-            return CreatedAtAction(nameof(GetById), new { id = taskItem.Id }, result);
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Failed to create TaskItem");
+                return StatusCode(500, "An error occurred while creating the task item");
+            }
         }
 
         // ✅ GET api/taskitems/{id}

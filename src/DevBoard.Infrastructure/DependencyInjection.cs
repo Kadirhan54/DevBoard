@@ -1,5 +1,6 @@
 ﻿// Infrastructure/DependencyInjection.cs
 using DevBoard.Application.Services;
+using DevBoard.Infrastructure.BackgroundServices;
 using DevBoard.Infrastructure.Messaging;
 using DevBoard.Infrastructure.Messaging.Configuration;
 using DevBoard.Infrastructure.Messaging.Consumers.BoardConsumers;
@@ -18,9 +19,22 @@ namespace DevBoard.Infrastructure
     {
         public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // ... existing services ...
+            
             services.AddScoped<ITenantProvider, TenantProvider>();
             services.AddScoped<IEventPublisher, EventPublisher>();
+
+            // Outbox Processor Settings
+            var outboxProcessorSettings = configuration.GetSection("OutboxProcessor").Get<OutboxProcessorSettings>() ?? new OutboxProcessorSettings();
+            services.AddSingleton(outboxProcessorSettings);
+
+            // Outbox Service
+            services.AddScoped<IOutboxService, OutboxService>();
+
+            // Background Service for Outbox Processing
+            services.AddHostedService<OutboxProcessorService>();
+
+            // Background Service for Outbox Cleanup
+            services.AddHostedService<OutboxCleanupService>();
 
             // RabbitMQ Settings
             var rabbitMqSettings = configuration.GetSection("RabbitMq").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
