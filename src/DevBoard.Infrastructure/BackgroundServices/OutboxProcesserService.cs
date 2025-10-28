@@ -15,12 +15,13 @@ namespace DevBoard.Infrastructure.BackgroundServices
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<OutboxProcessorService> _logger;
-        private readonly OutboxProcessorSettings _settings;
+        private readonly OutboxSettings _settings;
+
 
         public OutboxProcessorService(
             IServiceProvider serviceProvider,
             ILogger<OutboxProcessorService> logger,
-            OutboxProcessorSettings settings)
+            OutboxSettings settings)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
@@ -31,8 +32,8 @@ namespace DevBoard.Infrastructure.BackgroundServices
         {
             _logger.LogInformation(
                 "Outbox Processor Service started with interval: {Interval}s, batch size: {BatchSize}",
-                _settings.IntervalSeconds,
-                _settings.BatchSize);
+                _settings.ProcessorIntervalSeconds,
+                _settings.ProcessorBatchSize);
 
             // Wait for application to fully start
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
@@ -48,7 +49,7 @@ namespace DevBoard.Infrastructure.BackgroundServices
                     _logger.LogError(ex, "Error processing outbox messages");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(_settings.IntervalSeconds), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(_settings.ProcessorIntervalSeconds), stoppingToken);
             }
 
             _logger.LogInformation("Outbox Processor Service stopped");
@@ -64,7 +65,7 @@ namespace DevBoard.Infrastructure.BackgroundServices
             var messages = await dbContext.OutboxMessages
                 .Where(m => m.ProcessedOnUtc == null && m.RetryCount < _settings.MaxRetries)
                 .OrderBy(m => m.OccurredOnUtc)
-                .Take(_settings.BatchSize)
+                .Take(_settings.ProcessorBatchSize)
                 .ToListAsync(cancellationToken);
 
             if (!messages.Any())

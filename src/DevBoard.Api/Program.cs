@@ -1,7 +1,6 @@
 ﻿using DevBoard.Api.Services;
 using DevBoard.Application.Interfaces;
 using DevBoard.Domain.Identity;
-using DevBoard.Infrastructure.Consumers;
 using DevBoard.Infrastructure.Contexts.Application;
 using DevBoard.Infrastructure.Seed;
 using DevBoard.Infrastructure.Services;

@@ -1,7 +1,6 @@
 ﻿using DevBoard.Application.Dtos;
 using DevBoard.Application.Services;
 using DevBoard.Domain.Entities;
-using DevBoard.Domain.Events;
 using DevBoard.Infrastructure.Contexts.Application;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
@@ -69,12 +68,7 @@ namespace DevBoard.Api.Controllers
                 project.TenantId.ToString()
             );
 
-            await _publishEndpoint.Publish<ProjectCreated>(new
-            {
-                ProjectId = projectId,
-                Name = dto.Name,
-                CreatedAt = DateTime.UtcNow
-            });
+            // TODO : Publish ProjectCreated event via EventPublisher service
 
             return Ok(new { ProjectId = projectId, Result = result });
         }

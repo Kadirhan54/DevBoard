@@ -11,15 +11,16 @@ namespace DevBoard.Infrastructure.BackgroundServices
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<OutboxCleanupService> _logger;
-        private readonly TimeSpan _interval = TimeSpan.FromHours(24); // Run daily
-        private readonly int _retentionDays = 7; // Keep for 7 days
+        private readonly OutboxSettings _settings;
 
         public OutboxCleanupService(
             IServiceProvider serviceProvider,
-            ILogger<OutboxCleanupService> logger)
+            ILogger<OutboxCleanupService> logger,
+            OutboxSettings settings)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
+            _settings = settings;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,7 +28,7 @@ namespace DevBoard.Infrastructure.BackgroundServices
             _logger.LogInformation("Outbox Cleanup Service started");
 
             // Wait before first run
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            await Task.Delay(_settings.CleanupStartupDelayMinutes, stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -40,7 +41,7 @@ namespace DevBoard.Infrastructure.BackgroundServices
                     _logger.LogError(ex, "Error cleaning up outbox messages");
                 }
 
-                await Task.Delay(_interval, stoppingToken);
+                await Task.Delay(_settings.CleanupIntervalHours, stoppingToken);
             }
 
             _logger.LogInformation("Outbox Cleanup Service stopped");
@@ -51,7 +52,7 @@ namespace DevBoard.Infrastructure.BackgroundServices
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var cutoffDate = DateTime.UtcNow.AddDays(-_retentionDays);
+            var cutoffDate = DateTime.UtcNow.AddDays(-_settings.CleanupRetentionDays);
 
             var deletedCount = await dbContext.OutboxMessages
                 .Where(m => m.ProcessedOnUtc != null && m.ProcessedOnUtc < cutoffDate)
@@ -62,7 +63,7 @@ namespace DevBoard.Infrastructure.BackgroundServices
                 _logger.LogInformation(
                     "Cleaned up {Count} old outbox messages older than {Days} days",
                     deletedCount,
-                    _retentionDays);
+                    _settings.CleanupRetentionDays);
             }
         }
     }

@@ -23,9 +23,9 @@ namespace DevBoard.Infrastructure
             services.AddScoped<ITenantProvider, TenantProvider>();
             services.AddScoped<IEventPublisher, EventPublisher>();
 
-            // Outbox Processor Settings
-            var outboxProcessorSettings = configuration.GetSection("OutboxProcessor").Get<OutboxProcessorSettings>() ?? new OutboxProcessorSettings();
-            services.AddSingleton(outboxProcessorSettings);
+            // Outbox Settings
+            var outboxSettings = configuration.GetSection("OutboxSettings").Get<OutboxSettings>() ?? new OutboxSettings();
+            services.AddSingleton(outboxSettings);
 
             // Outbox Service
             services.AddScoped<IOutboxService, OutboxService>();
