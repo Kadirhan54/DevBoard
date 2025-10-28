@@ -4,11 +4,6 @@ using Microsoft.AspNetCore.Http;
 
 namespace DevBoard.Infrastructure.Services
 {
-    public interface ITenantProvider
-    {
-        Guid GetTenantId();
-    }
-
     public class TenantProvider : ITenantProvider
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

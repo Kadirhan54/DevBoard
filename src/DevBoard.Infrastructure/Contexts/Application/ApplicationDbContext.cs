@@ -3,6 +3,7 @@ using DevBoard.Domain.Entities;
 using DevBoard.Domain.Entities.DevBoard.Domain.Entities;
 using DevBoard.Domain.Identity;
 using DevBoard.Infrastructure.Services;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,7 @@ namespace DevBoard.Infrastructure.Contexts.Application
     {
         private readonly ITenantProvider _tenantProvider;
 
-        // Property used in global query filters
-        // Fix for CS0266 and CS8629: Ensure TenantId is never null by using GetValueOrDefault()
-        // This assumes ITenantProvider.GetTenantId() returns Guid? (nullable Guid).
-        public Guid TenantId => _tenantProvider?.GetTenantId() ?? Guid.Empty;
-        //public Guid TenantId => _tenantProvider?.GetTenantId() ?? throw new InvalidOperationException("TenantId not available for current request");
+        public Guid TenantId => _tenantProvider.GetTenantId();
 
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options,
@@ -34,6 +31,7 @@ namespace DevBoard.Infrastructure.Contexts.Application
         public DbSet<TaskItem> Tasks => Set<TaskItem>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -80,6 +78,26 @@ namespace DevBoard.Infrastructure.Contexts.Application
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -------------------------------
+            // Outbox configuration
+            // ------------------------------
+            builder.Entity<OutboxMessage>(entity =>
+            {
+                entity.ToTable("OutboxMessages");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ProcessedOnUtc);
+                entity.HasIndex(e => new { e.TenantId, e.ProcessedOnUtc });
+                entity.Property(e => e.Type).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Content).IsRequired();
+            });
+
+            // -------------------------------
+            // Add MassTransit Outbox tables
+            // -------------------------------
+            builder.AddInboxStateEntity();
+            builder.AddOutboxMessageEntity();
+            builder.AddOutboxStateEntity();
+
+            // -------------------------------
             // Optional: global schema for non-Identity tables
             // -------------------------------
             builder.HasDefaultSchema("public"); // leave EF Core default for Tenant, Project, Board, TaskItem
@@ -88,9 +106,6 @@ namespace DevBoard.Infrastructure.Contexts.Application
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            //SetTenantAndAudit();
-            //return await base.SaveChangesAsync(cancellationToken);
-
             var tenantId = _tenantProvider.GetTenantId();
 
             // If no tenant context (e.g., seeding or system admin), skip assignment
@@ -130,26 +145,6 @@ namespace DevBoard.Infrastructure.Contexts.Application
         //            {
         //                createdEntity.CreatedAt = DateTime.UtcNow;
         //            }
-
-        //            // Set TenantId if entity implements ITenantEntity
-        //            if (entry.Entity is ITenantEntity tenantEntity && tenantEntity.TenantId == Guid.Empty)
-        //            {
-        //                switch (entry.Entity)
-        //                {
-        //                    case Board board:
-        //                        tenantEntity.TenantId = board.Project?.TenantId ?? TenantId;
-        //                        break;
-
-        //                    case TaskItem task:
-        //                        tenantEntity.TenantId = task.Board?.TenantId ?? TenantId;
-        //                        break;
-
-        //                    default:
-        //                        tenantEntity.TenantId = TenantId;
-        //                        break;
-        //                }
-        //            }
-        //        }
 
         //        // Optional: handle modified/deleted timestamps
         //        // if (entry.State == EntityState.Modified && entry.Entity is IModifiedByEntity modifiedEntity)

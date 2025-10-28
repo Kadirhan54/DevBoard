@@ -13,36 +13,13 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using DevBoard.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-builder.Services.AddMassTransit(x =>
-{
-    // Scan the correct assembly
-    x.AddConsumers(typeof(ProjectCreatedConsumer).Assembly);
-
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        var rabbitHost = configuration["RabbitMQ:Host"] ?? "rabbitmq";
-        var virtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/";
-        var username = configuration["RabbitMQ:Username"] ?? "guest";
-        var password = configuration["RabbitMQ:Password"] ?? "guest";
-
-        cfg.Host(rabbitHost, virtualHost, h =>  
-        {
-            h.Username(username);
-            h.Password(password);
-        });
-
-        //cfg.ReceiveEndpoint("project-created-queue", e =>
-        //{
-        //    e.ConfigureConsumer<ProjectCreatedConsumer>(context);
-        //});
-
-        cfg.ConfigureEndpoints(context);
-    });
-});
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -56,6 +33,19 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "DevBoard API",
+        Version = "v1",
+        Description = "API for DevBoard project",
+        Contact = new OpenApiContact
+        {
+            Name = "DevBoard Team",
+            Email = "support@devboard.com"
+        }
+    });
+
+
     options.AddSecurityDefinition("Bearer", 
         new OpenApiSecurityScheme
         {
@@ -91,8 +81,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
@@ -148,7 +136,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "DevBoard API v1");
+        c.RoutePrefix = string.Empty; // serve UI at root
+    });
 }
 
 // ✅ Apply migrations and seed outside of HTTP request handling
