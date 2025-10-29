@@ -1,9 +1,10 @@
-﻿using DevBoard.Application.Dtos;
-using DevBoard.Domain.Entities;
-using DevBoard.Infrastructure.Contexts.Application;
-using Microsoft.AspNetCore.Http;
+﻿
+// ============================================================================
+// FILE 3: Api/Controllers/BoardsController.cs (Refactored)
+// ============================================================================
+using DevBoard.Application.Dtos;
+using DevBoard.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace DevBoard.Api.Controllers
 {
@@ -11,98 +12,46 @@ namespace DevBoard.Api.Controllers
     [ApiController]
     public class BoardsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBoardService _boardService;
 
-        public BoardsController(ApplicationDbContext context)
+        public BoardsController(IBoardService boardService)
         {
-            _context = context;
+            _boardService = boardService;
         }
 
-        // GET: api/boards
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SimpleBoardDto>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var boards = await _context.Boards
-                .AsNoTracking()
-                .Select(b => new SimpleBoardDto(
-                    b.Id,
-                    b.Name,
-                    b.Description,
-                    b.TenantId
-                ))
-                .ToListAsync();
-
-            return Ok(boards);
+            var result = await _boardService.GetAllAsync();
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
         }
 
-        // POST: api/boards
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await _boardService.GetByIdAsync(id);
+            return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
+        }
+
         [HttpPost]
-        public async Task<ActionResult<SimpleBoardDto>> Create([FromBody] CreateBoardDto dto)
+        public async Task<IActionResult> Create([FromBody] CreateBoardDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var projectExists = await _context.Projects
-                .AsNoTracking()
-                .AnyAsync(p => p.Id == dto.ProjectId);
+            var result = await _boardService.CreateAsync(dto);
 
-            if (!projectExists)
-                return NotFound($"Project with ID {dto.ProjectId} not found.");
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
 
-            var board = new Board
-            {
-                Name = dto.Name,
-                Description = dto.Description,
-                ProjectId = dto.ProjectId
-            };
-
-            await _context.Boards.AddAsync(board);
-            await _context.SaveChangesAsync();
-
-            var result = new SimpleBoardDto(
-                board.Id,
-                board.Name,
-                board.Description,
-                board.TenantId
-            );
-
-            return CreatedAtAction(nameof(GetById), new { id = board.Id }, result);
+            return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
         }
 
-        // GET: api/boards/{id}
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<SimpleBoardDto>> GetById(Guid id)
-        {
-            var board = await _context.Boards
-                .AsNoTracking()
-                .Where(b => b.Id == id)
-                .Select(b => new SimpleBoardDto(
-                    b.Id,
-                    b.Name,
-                    b.Description,
-                    b.TenantId
-                ))
-                .FirstOrDefaultAsync();
-
-            if (board is null)
-                return NotFound($"Board with ID {id} not found.");
-
-            return Ok(board);
-        }
-
-        // DELETE: api/boards/{id}
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var board = await _context.Boards.FindAsync(id);
-
-            if (board is null)
-                return NotFound($"Board with ID {id} not found.");
-
-            _context.Boards.Remove(board);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var result = await _boardService.DeleteAsync(id);
+            return result.IsSuccess ? NoContent() : NotFound(result.Error);
         }
     }
 }

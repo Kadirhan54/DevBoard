@@ -1,16 +1,10 @@
-﻿using DevBoard.Application.Dtos;
-using DevBoard.Application.Services;
-using DevBoard.Domain.Entities;
-using DevBoard.Infrastructure.Contexts.Application;
-using MassTransit;
-using Microsoft.AspNetCore.Authorization;
+﻿
+// ============================================================================
+// FILE 2: Api/Controllers/ProjectsController.cs (Refactored)
+// ============================================================================
+using DevBoard.Application.Dtos;
+using DevBoard.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Xml.Linq;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace DevBoard.Api.Controllers
 {
@@ -18,130 +12,50 @@ namespace DevBoard.Api.Controllers
     [ApiController]
     public class ProjectsController : ControllerBase
     {
+        private readonly IProjectService _projectService;
 
-        private readonly ApplicationDbContext _context;
-        private readonly IPublishEndpoint _publishEndpoint;
-
-        public ProjectsController(ApplicationDbContext context, IPublishEndpoint publishEndpoint)
+        public ProjectsController(IProjectService projectService)
         {
-            _context = context;
-            _publishEndpoint = publishEndpoint;
+            _projectService = projectService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var projects = await _context.Projects
-                .AsNoTracking()
-                .Select(p => new ProjectDto(
-                    p.Id,
-                    p.Name,
-                    p.Description,
-                    p.TenantId.ToString()
-                ))
-                .ToListAsync();
-
-            return Ok(projects);
+            var result = await _projectService.GetAllAsync();
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateProjectDto dto)
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetById(Guid id)
         {
-
-            var projectId = Guid.NewGuid();
-
-            var project = new Project
-            {
-                Id = projectId,
-                Name = dto.Name,
-                Description = dto.Description,
-                TenantId = Guid.Parse(dto.TenantId)
-            };
-
-            await _context.Projects.AddAsync(project);
-            await _context.SaveChangesAsync();
-
-            var result = new ProjectDto(
-                project.Id,
-                project.Name,
-                project.Description,
-                project.TenantId.ToString()
-            );
-
-            // TODO : Publish ProjectCreated event via EventPublisher service
-
-            return Ok(new { ProjectId = projectId, Result = result });
+            var result = await _projectService.GetByIdAsync(id);
+            return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
         }
 
         [HttpGet("{projectId:guid}/boards")]
         public async Task<IActionResult> GetProjectWithBoardsByProject(Guid projectId)
         {
-            var project = await _context.Projects
-                .AsNoTracking()
-                .Where(p => p.Id == projectId)
-                .Select(p => new ProjectWithBoardsDto(
-                    p.Id,
-                    p.Name,
-                    p.Description,
-                    p.TenantId.ToString(),
-                    p.Boards.Select(b => new BoardWithTasksDto(
-                        b.Id,
-                        b.Name,
-                        b.Description,
-                        b.TenantId,
-                        b.Tasks.Select(t => new TaskItemResponseDto(
-                            t.Id,
-                            t.Name,
-                            t.Description,
-                            (int)t.Status,
-                            t.DueDate,
-                            t.BoardId,
-                            t.TenantId
-                        ))
-                    ))
-                ))
-                .FirstOrDefaultAsync();
-
-            if (project is null)
-                return NotFound($"Project with ID {projectId} not found.");
-
-            return Ok(project);
+            var result = await _projectService.GetProjectWithBoardsAsync(projectId);
+            return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
         }
 
-        // GET: api/projects/{id}
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ProjectDto>> GetById(Guid id)
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateProjectDto dto)
         {
-            var project = await _context.Projects
-                .AsNoTracking()
-                .Where(p => p.Id == id)
-                .Select(p => new ProjectDto(
-                    p.Id,
-                    p.Name,
-                    p.Description,
-                    p.TenantId.ToString()
-                ))
-                .FirstOrDefaultAsync();
+            var result = await _projectService.CreateAsync(dto);
 
-            if (project is null)
-                return NotFound();
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
 
-            return Ok(project);
+            return Ok(new { ProjectId = result.Value.Id, Result = result.Value });
         }
 
-        // DELETE: api/projects/{id}
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var project = await _context.Projects.FindAsync(id);
-
-            if (project is null)
-                return NotFound($"Project with ID {id} not found.");
-
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync();
-
-            return NoContent(); // ✅ 204 No Content (standard for DELETE)
+            var result = await _projectService.DeleteAsync(id);
+            return result.IsSuccess ? NoContent() : NotFound(result.Error);
         }
     }
 }

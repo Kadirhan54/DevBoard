@@ -1,13 +1,12 @@
-﻿using DevBoard.Application.Dtos;
+﻿
+// ============================================================================
+// FILE 5: Api/Controllers/InvitesController.cs (Refactored)
+// ============================================================================
+using DevBoard.Application.Dtos;
 using DevBoard.Application.Interfaces;
-using DevBoard.Domain.Entities.DevBoard.Domain.Entities;
 using DevBoard.Domain.Identity;
-using DevBoard.Infrastructure.Contexts.Application;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace DevBoard.Api.Controllers
 {
@@ -16,96 +15,47 @@ namespace DevBoard.Api.Controllers
     [Authorize]
     public class InvitesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager; 
-        private readonly ITokenService _tokenService;
+        private readonly IInviteService _inviteService;
 
-        public InvitesController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, ITokenService tokenService)
+        public InvitesController(IInviteService inviteService)
         {
-            _context = context;
-            _userManager = userManager;
-            _tokenService = tokenService;
+            _inviteService = inviteService;
         }
 
         [Authorize(Roles = Roles.Admin)]
         [HttpPost("send")]
         public async Task<IActionResult> SendInvite([FromBody] string invitedEmail)
         {
-            // Get the current user's tenant from JWT
-            var tenantIdClaim = User.FindFirst("tenantId")?.Value;
-            if (string.IsNullOrEmpty(tenantIdClaim))
-                return BadRequest("TenantId missing from token.");
+            var result = await _inviteService.SendInviteAsync(invitedEmail);
 
-            var tenantId = Guid.Parse(tenantIdClaim);
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
 
-            // Generate secure random token
-            var inviteToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-                .Replace("=", "").Replace("+", "").Replace("/", "");
-
-            var invitation = new TenantInvitation
-            {
-                TenantId = tenantId,
-                InvitedEmail = invitedEmail,
-                InviteToken = inviteToken
-            };
-
-            _context.TenantInvitations.Add(invitation);
-            await _context.SaveChangesAsync();
-
-            // TODO: Send via email — for now, return it in response
             return Ok(new
             {
-                Message = "Invitation created successfully.",
-                InviteToken = inviteToken
+                Message = result.Value.Message,
+                InviteToken = result.Value.InviteToken
             });
         }
-
 
         [HttpPost("accept-invite")]
         public async Task<IActionResult> AcceptInvite([FromForm] AcceptInviteDto dto)
         {
-            var invitation = await _context.TenantInvitations
-                .FirstOrDefaultAsync(i => i.InviteToken == dto.InviteToken && !i.IsUsed);
+            var result = await _inviteService.AcceptInviteAsync(dto);
 
-            if (invitation == null || invitation.ExpiresAt < DateTime.UtcNow)
-                return BadRequest("Invalid or expired invite token.");
-
-
-            // TODO : Implement if user is already registered ????
-            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-            if (existingUser != null)
-                return BadRequest("User with this email already exists.");
-
-            var user = new ApplicationUser
+            if (!result.IsSuccess)
             {
-                UserName = dto.Email,
-                Email = dto.Email,
-                TenantId = invitation.TenantId,
-                EnableNotifications = true
-            };
-
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
-
-            await _userManager.AddToRoleAsync(user, Roles.Member);
-
-            // Mark invite as used
-            invitation.IsUsed = true;
-            await _context.SaveChangesAsync();
-
-            var token = _tokenService.CreateTokenAsync(user);
+                if (result.Errors.Any())
+                    return BadRequest(result.Errors);
+                return BadRequest(result.Error);
+            }
 
             return Ok(new
             {
-                Message = "User successfully registered via invitation.",
-                Token = token,
-                TenantId = invitation.TenantId
+                Message = result.Value.Message,
+                Token = result.Value.Token,
+                TenantId = result.Value.TenantId
             });
         }
-
-
-
-
     }
 }

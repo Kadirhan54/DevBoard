@@ -1,4 +1,5 @@
 ﻿// Infrastructure/DependencyInjection.cs
+using DevBoard.Application.Interfaces;
 using DevBoard.Application.Services;
 using DevBoard.Infrastructure.BackgroundServices;
 using DevBoard.Infrastructure.Messaging;
@@ -19,7 +20,14 @@ namespace DevBoard.Infrastructure
     {
         public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            
+            // Register all services
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<IBoardService, BoardService>();
+            services.AddScoped<ITaskItemService, TaskItemService>();
+            services.AddScoped<IInviteService, InviteService>();
+            services.AddScoped<ITenantService, TenantService>();
+
             services.AddScoped<ITenantProvider, TenantProvider>();
             services.AddScoped<IEventPublisher, EventPublisher>();
 

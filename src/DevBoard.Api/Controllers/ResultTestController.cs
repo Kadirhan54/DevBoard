@@ -10,12 +10,12 @@ namespace DevBoard.Api.Controllers
     [ApiController]
     public class ResultTestController : ControllerBase
     {
-        [HttpGet("test")]
-        public ActionResult<Result<string>> Test()
-        {
-            var result = Result<string>.Success("Hello From result Controller"); // ✅ Clean and readable
+        //[HttpGet("test")]
+        //public ActionResult<Result<string>> Test()
+        //{
+        //    var result = Result<string>.Success("Hello From result Controller"); // ✅ Clean and readable
 
-            return Ok(result);
-        }
+        //    return Ok(result);
+        //}
     }
 }
