@@ -1,9 +1,9 @@
-﻿using DevBoard.Application.Dtos;
-using DevBoard.Infrastructure.Contexts.Application;
-using DevBoard.Infrastructure.Services;
+﻿
+// ============================================================================
+// FILE 6: Api/Controllers/TenantsController.cs (Refactored)
+// ============================================================================
+using DevBoard.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace DevBoard.Api.Controllers
 {
@@ -11,27 +11,18 @@ namespace DevBoard.Api.Controllers
     [ApiController]
     public class TenantsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ITenantProvider _tenantProvider;
+        private readonly ITenantService _tenantService;
 
-        public TenantsController(ApplicationDbContext context, ITenantProvider tenantProvider)
+        public TenantsController(ITenantService tenantService)
         {
-            _context = context;
-            _tenantProvider = tenantProvider;
+            _tenantService = tenantService;
         }
 
         [HttpGet("all")]
         public async Task<IActionResult> GetAllTenants()
         {
-            var tenants = await _context.Tenants
-                .Include(t => t.Users)
-                .Include(t => t.Projects)
-                    .ThenInclude(p => p.Boards)
-                        .ThenInclude(b => b.Tasks)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return Ok(tenants);
+            var result = await _tenantService.GetAllTenantsAsync();
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
         }
     }
 }

@@ -1,18 +1,9 @@
-﻿using DevBoard.Application.Dtos;
+﻿// ============================================================================
+// FILE 1: Api/Controllers/AuthController.cs (Refactored)
+// ============================================================================
+using DevBoard.Application.Dtos;
 using DevBoard.Application.Interfaces;
-using DevBoard.Domain.Entities;
-using DevBoard.Domain.Identity;
-using DevBoard.Infrastructure.Contexts.Application;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.CompilerServices;
-using System.Security.Claims;
-using System.Text;
 
 namespace DevBoard.Api.Controllers
 {
@@ -20,102 +11,53 @@ namespace DevBoard.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IConfiguration _configuration;
-        private readonly ITokenService _tokenService;
+        private readonly IAuthService _authService;
 
-        public AuthController(ApplicationDbContext context,UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,ITokenService tokenService)
+        public AuthController(IAuthService authService)
         {
-            _context = context;
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _configuration = configuration;
-            _tokenService = tokenService;
+            _authService = authService;
         }
 
         [HttpGet("GetUsers")]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IActionResult> GetUsersAsync()
         {
-            var users = await _context.Users.Select(u => new SimpleUserDto(
-                    Guid.Parse(u.Id),
-                    u.Email,
-                    u.TenantId
-                )
-           ).ToListAsync();
-            return Ok(users);
+            var result = await _authService.GetUsersAsync();
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromForm] LoginDto loginDto)
+        public async Task<IActionResult> LoginAsync([FromForm] LoginDto loginDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            var result = await _authService.LoginAsync(loginDto);
 
-            if (user == null)
-            {
-                return BadRequest("User not Found!");
-            }
-
-            var loginResult = await _signInManager.PasswordSignInAsync(user, loginDto.Password, true, false);
-
-            if (!loginResult.Succeeded)
-            {
-                return BadRequest("Invalid Credentials");
-            }
-
-            var token = _tokenService.CreateTokenAsync(user);
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
 
             return Ok(new
             {
-                Token = token,
-                TenantId = user.TenantId
+                Token = result.Value.Token,
+                TenantId = result.Value.TenantId
             });
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromForm] RegisterDto registerDto)
+        public async Task<IActionResult> RegisterAsync([FromForm] RegisterDto registerDto)
         {
-            var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
-            if (existingUser != null) return BadRequest("User already exists");
+            var result = await _authService.RegisterAsync(registerDto);
 
-            // Find or create tenant
-            var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Name == registerDto.OrganizationName);
-            if (tenant == null)
+            if (!result.IsSuccess)
             {
-                tenant = new Tenant { Name = registerDto.OrganizationName, Domain = registerDto.Domain };
-                _context.Tenants.Add(tenant);
-                await _context.SaveChangesAsync();
+                if (result.Errors.Any())
+                    return BadRequest(result.Errors);
+                return BadRequest(result.Error);
             }
-
-            var user = new ApplicationUser
-            {
-                UserName = registerDto.Email,
-                Email = registerDto.Email,
-                TenantId = tenant.Id,
-                EnableNotifications = registerDto.EnableNotifications
-            };
-
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
-            await _userManager.AddToRoleAsync(user, Roles.Member);
-
-            // Attach to tenant navigation property
-            tenant.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            var token = _tokenService.CreateTokenAsync(user);
 
             return Ok(new
             {
-                Message = "Registration successful",
-                Token = token,
-                TenantId = tenant.Id,
-                Organization = tenant.Name
+                Token = result.Value.Token,
+                TenantId = result.Value.TenantId,
+                Organization = result.Value.OrganizationName
             });
         }
-
-
     }
 }

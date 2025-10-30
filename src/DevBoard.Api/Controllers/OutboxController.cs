@@ -1,6 +1,5 @@
 ﻿// Presentation/Controllers/OutboxController.cs
 using DevBoard.Infrastructure.Contexts.Application;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,7 +1,4 @@
-﻿using DevBoard.Application.Dtos;
-using DevBoard.Domain.Common;
-using DevBoard.Domain.Enums;
-using Microsoft.AspNetCore.Http;
+﻿using DevBoard.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DevBoard.Api.Controllers
