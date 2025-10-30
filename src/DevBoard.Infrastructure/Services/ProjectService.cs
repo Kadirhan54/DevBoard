@@ -84,6 +84,8 @@ namespace DevBoard.Infrastructure.Services
 
         public async Task<Result<ProjectDto>> CreateAsync(CreateProjectDto dto)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
                 var tenantId = _tenantProvider.GetTenantId();
@@ -110,6 +112,8 @@ namespace DevBoard.Infrastructure.Services
                     Name = project.Name,
                     TenantId = project.TenantId
                 });
+
+                await transaction.CommitAsync();
 
                 var result = new ProjectDto(
                     project.Id,

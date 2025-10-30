@@ -75,6 +75,8 @@ namespace DevBoard.Infrastructure.Services
 
         public async Task<Result<SimpleBoardDto>> CreateAsync(CreateBoardDto dto)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
                 var projectExists = await _context.Projects
@@ -93,6 +95,8 @@ namespace DevBoard.Infrastructure.Services
 
                 await _context.Boards.AddAsync(board);
                 await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
 
                 var result = new SimpleBoardDto(
                     board.Id,
