@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>6904ba63-af31-48ee-bf29-d81280501551</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..\..\..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="8.5.5" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\DevBoard.Shared.Common\DevBoard.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\Shared\DevBoard.Shared.Contracts\DevBoard.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\DevBoard.Services.Tasks.Core\DevBoard.Services.Tasks.Core.csproj" />
+    <ProjectReference Include="..\DevBoard.Services.Tasks.Infrastructure\DevBoard.Services.Tasks.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
