@@ -1,0 +1,99 @@
+// ============================================================================
+// FILE: Services/Projects/DevBoard.Services.Projects.Api/Program.cs
+// ============================================================================
+using DevBoard.Services.Projects.Api.Services;
+using DevBoard.Services.Projects.Infrastructure.Data;
+using DevBoard.Shared.Common;
+using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Database
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
+
+builder.Services.AddDbContext<ProjectDbContext>((options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DevBoardProjectDb"));
+});
+
+// Services
+builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<BoardService>();
+
+// MassTransit
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"], "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"]!);
+            h.Password(builder.Configuration["RabbitMQ:Password"]!);
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            RoleClaimType = ClaimTypes.Role
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Health Checks
+builder.Services.AddHealthChecks();
+
+var app = builder.Build();
+
+// Auto-migrate database
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ProjectDbContext>();
+    await db.Database.MigrateAsync();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "DevBoard API v1");
+        c.RoutePrefix = string.Empty; // serve UI at root
+    });
+}
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+app.MapHealthChecks("/health");
+
+app.Run();

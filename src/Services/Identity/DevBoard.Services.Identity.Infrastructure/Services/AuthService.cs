@@ -4,6 +4,7 @@
 // ============================================================================
 using DevBoard.Services.Identity.Core.Entities;
 using DevBoard.Services.Identity.Infrastructure.Data;
+using DevBoard.Services.Identity.Infrastructure.Services;
 using DevBoard.Shared.Common;
 using DevBoard.Shared.Contracts.Auth;
 using DevBoard.Shared.Contracts.Events;
@@ -19,7 +20,7 @@ public class AuthService
     private readonly IdentityDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly ITokenService _tokenService;
+    private readonly TokenService _tokenService;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<AuthService> _logger;
 
@@ -27,7 +28,7 @@ public class AuthService
         IdentityDbContext context,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        ITokenService tokenService,
+        TokenService tokenService,
         IPublishEndpoint publishEndpoint,
         ILogger<AuthService> logger)
     {
