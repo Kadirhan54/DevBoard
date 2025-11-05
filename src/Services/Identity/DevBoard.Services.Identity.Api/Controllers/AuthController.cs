@@ -2,7 +2,7 @@
 // ============================================================================
 // FILE: Services/Identity/DevBoard.Services.Identity.Api/Controllers/AuthController.cs
 // ============================================================================
-using DevBoard.Services.Identity.Api.Services;
+using DevBoard.Services.Identity.Infrastructure.Services;
 using DevBoard.Shared.Contracts.Auth;
 using Microsoft.AspNetCore.Mvc;
 

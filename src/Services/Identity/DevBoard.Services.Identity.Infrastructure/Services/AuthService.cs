@@ -4,7 +4,6 @@
 // ============================================================================
 using DevBoard.Services.Identity.Core.Entities;
 using DevBoard.Services.Identity.Infrastructure.Data;
-using DevBoard.Services.Identity.Infrastructure.Services;
 using DevBoard.Shared.Common;
 using DevBoard.Shared.Contracts.Auth;
 using DevBoard.Shared.Contracts.Events;
@@ -13,7 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace DevBoard.Services.Identity.Api.Services;
+namespace DevBoard.Services.Identity.Infrastructure.Services;
 
 public class AuthService
 {

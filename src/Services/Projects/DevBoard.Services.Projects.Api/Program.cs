@@ -1,8 +1,9 @@
-// ============================================================================
+﻿// ============================================================================
 // FILE: Services/Projects/DevBoard.Services.Projects.Api/Program.cs
 // ============================================================================
 using DevBoard.Services.Projects.Api.Services;
 using DevBoard.Services.Projects.Infrastructure.Data;
+using DevBoard.Services.Projects.Infrastructure.Seed;
 using DevBoard.Shared.Common;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,7 +24,7 @@ builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 
 builder.Services.AddDbContext<ProjectDbContext>((options) =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DevBoardProjectDb"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ProjectDb"));
 });
 
 // Services
@@ -77,6 +78,25 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ProjectDbContext>();
     await db.Database.MigrateAsync();
+}
+
+// ✅ Seed database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ProjectDbContext>();
+        var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+
+        await ProjectDbSeeder.SeedAsync(context, loggerFactory);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database");
+        throw;
+    }
 }
 
 if (app.Environment.IsDevelopment())
