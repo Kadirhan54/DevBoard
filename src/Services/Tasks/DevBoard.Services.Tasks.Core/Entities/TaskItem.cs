@@ -19,8 +19,11 @@ public class TaskItem
     public string? ImageUrl { get; set; }
 
     public List<Comment> Comments { get; set; } = new();
+    public List<Attachment> Attachments { get; set; } = new();
 }
 
+
+// TODO : Seperate comment entity to another file
 public class Comment
 {
     public Guid Id { get; set; }
@@ -29,4 +32,6 @@ public class Comment
     public TaskItem TaskItem { get; set; } = null!;
     public Guid CommentedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    //public List<Attachment> Attachments { get; set; } = new();
 }

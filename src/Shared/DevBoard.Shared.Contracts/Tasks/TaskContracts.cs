@@ -23,6 +23,7 @@ public record TaskDto(
     string? AssignedUserId
 );
 
+// TODO : move comment dtos to responsive contract
 public record CreateCommentRequest(string Text);
 
 public record CommentDto(

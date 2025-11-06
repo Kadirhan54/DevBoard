@@ -12,6 +12,7 @@ namespace DevBoard.Services.Tasks.Api.Controllers;
 [Route("api/v1/tasks")]
 [ApiController]
 [Authorize]
+[AllowAnonymous] // ⚠️ TEMPORARY - Remove after implementing proper auth! // TODO
 public class TasksController : ControllerBase
 {
     private readonly TaskService _taskService;

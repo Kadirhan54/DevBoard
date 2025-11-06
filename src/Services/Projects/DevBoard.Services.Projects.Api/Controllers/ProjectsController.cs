@@ -11,6 +11,7 @@ namespace DevBoard.Services.Projects.Api.Controllers;
 [Route("api/v1/projects")]
 [ApiController]
 [Authorize]
+[AllowAnonymous] // ⚠️ TEMPORARY - Remove after implementing proper auth! // TODO
 public class ProjectsController : ControllerBase
 {
     private readonly ProjectService _projectService;
@@ -32,6 +33,13 @@ public class ProjectsController : ControllerBase
     {
         var result = await _projectService.GetByIdAsync(id);
         return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
+    }
+
+    [HttpHead("{id}")]
+    public async Task<IActionResult> HeadBoard(Guid id)
+    {
+        var exists = await _projectService.GetByIdAsync(id);
+        return exists is not null ? Ok() : NotFound();
     }
 
     [HttpPost]

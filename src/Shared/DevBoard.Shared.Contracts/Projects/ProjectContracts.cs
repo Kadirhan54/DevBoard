@@ -15,6 +15,7 @@ public record ProjectDto(
     Guid TenantId
 );
 
+// TODO : move board dtos to responsive contract
 public record CreateBoardRequest(
     string Name,
     string Description,

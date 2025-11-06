@@ -35,8 +35,6 @@ builder.Services.AddSwaggerGen(options =>
             Email = "support@devboard.com"
         }
     });
-
-
     options.AddSecurityDefinition("Bearer",
         new OpenApiSecurityScheme
         {

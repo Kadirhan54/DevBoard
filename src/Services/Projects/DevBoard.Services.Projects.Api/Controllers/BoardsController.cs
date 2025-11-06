@@ -11,6 +11,7 @@ namespace DevBoard.Services.Projects.Api.Controllers;
 [Route("api/v1/boards")]
 [ApiController]
 [Authorize]
+[AllowAnonymous] // ⚠️ TEMPORARY - Remove after implementing proper auth! // TODO
 public class BoardsController : ControllerBase
 {
     private readonly BoardService _boardService;
