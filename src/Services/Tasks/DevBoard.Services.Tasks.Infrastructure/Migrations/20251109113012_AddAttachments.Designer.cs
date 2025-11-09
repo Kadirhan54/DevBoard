@@ -3,6 +3,7 @@ using System;
 using DevBoard.Services.Tasks.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 {
     [DbContext(typeof(TaskDbContext))]
-    partial class TaskDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251109113012_AddAttachments")]
+    partial class AddAttachments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,17 +36,14 @@ namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 
                     b.Property<string>("ContentType")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FileName")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("text");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
@@ -53,8 +53,7 @@ namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 
                     b.Property<string>("StoragePath")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("TaskItemId")
                         .HasColumnType("uuid");
@@ -77,11 +76,7 @@ namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 
                     b.HasIndex("TaskItemId");
 
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("UploadedAt");
-
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachment");
                 });
 
             modelBuilder.Entity("DevBoard.Services.Tasks.Core.Entities.Comment", b =>
@@ -107,7 +102,7 @@ namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 
                     b.HasIndex("TaskItemId");
 
-                    b.ToTable("Comments", "public");
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("DevBoard.Services.Tasks.Core.Entities.TaskItem", b =>
@@ -144,7 +139,7 @@ namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tasks", "public");
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("DevBoard.Services.Tasks.Core.Entities.Attachment", b =>
@@ -155,8 +150,7 @@ namespace DevBoard.Services.Tasks.Infrastructure.Migrations
 
                     b.HasOne("DevBoard.Services.Tasks.Core.Entities.TaskItem", "TaskItem")
                         .WithMany("Attachments")
-                        .HasForeignKey("TaskItemId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("TaskItemId");
 
                     b.Navigation("Comment");
 

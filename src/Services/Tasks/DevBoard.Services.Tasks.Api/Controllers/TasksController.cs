@@ -45,7 +45,7 @@ public class TasksController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        // Implementation
-        return Ok();
+        var result = await _taskService.GetByIdAsync(id);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 }

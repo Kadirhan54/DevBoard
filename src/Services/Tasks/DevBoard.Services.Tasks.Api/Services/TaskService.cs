@@ -123,4 +123,36 @@ public class TaskService
             return Result<IEnumerable<TaskDto>>.Failure("Failed to retrieve tasks");
         }
     }
+
+    public async Task<Result<TaskDto>> GetByIdAsync(Guid id)
+    {
+        try
+        {
+            var task = await _context.Tasks
+                .AsNoTracking()
+                .Where(t => t.Id == id)
+                .Select(t => new TaskDto(
+                    t.Id,
+                    t.Name,
+                    t.Description,
+                    t.Status,
+                    t.DueDate,
+                    t.BoardId,
+                    t.TenantId,
+                    t.AssignedUserId
+                ))
+                .FirstOrDefaultAsync();
+
+            if (task == null)
+                return Result<TaskDto>.Failure($"Task {id} not found");
+
+            return Result<TaskDto>.Success(task);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving task");
+            return Result<TaskDto>.Failure("Failed to retrieve task");
+        }
+
+    }
 }

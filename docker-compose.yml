@@ -155,26 +155,26 @@ services:
   # BLOB STORAGE (MinIO - S3 Compatible)
   # ============================================================================
   
-  # minio:
-  #   image: minio/minio:latest
-  #   container_name: devboard-minio
-  #   restart: always
-  #   ports:
-  #     - "9000:9000"      # API
-  #     - "9001:9001"      # Console
-  #   environment:
-  #     MINIO_ROOT_USER: minioadmin
-  #     MINIO_ROOT_PASSWORD: minioadmin
-  #   command: server /data --console-address ":9001"
-  #   volumes:
-  #     - minio-data:/data
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
-  #   networks:
-  #     - devboard-network
+  minio:
+    image: minio/minio:latest
+    container_name: devboard-minio
+    restart: always
+    ports:
+      - "9000:9000"      # API
+      - "9001:9001"      # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - devboard-network
 
   # ============================================================================
   # MICROSERVICES
@@ -253,10 +253,10 @@ services:
       Jwt__Audience: "DevBoard.Users"
       Services__ProjectService__Url: "http://project-service:8080"
       Services__IdentityService__Url: "http://identity-service:8080"
-      # MinIO__Endpoint: "minio:9000"
-      # MinIO__AccessKey: "minioadmin"
-      # MinIO__SecretKey: "minioadmin"
-      # MinIO__BucketName: "task-attachments"
+      MinIO__Endpoint: "minio:9000"
+      MinIO__AccessKey: "minioadmin"
+      MinIO__SecretKey: "minioadmin"
+      MinIO__BucketName: "task-attachments"
     depends_on:
       task-db:
         condition: service_healthy
@@ -264,8 +264,8 @@ services:
         condition: service_healthy
       project-service:
         condition: service_started
-      # minio:
-      #   condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - devboard-network
 
@@ -332,4 +332,4 @@ volumes:
   identity-db-data:
   project-db-data:
   task-db-data:
-  # minio-data:
+  minio-data:

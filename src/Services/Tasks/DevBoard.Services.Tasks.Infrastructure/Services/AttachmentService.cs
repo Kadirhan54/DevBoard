@@ -10,8 +10,9 @@ using DevBoard.Shared.Common.Storage;
 using DevBoard.Shared.Contracts.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace DevBoard.Services.Tasks.Api.Services;
+namespace DevBoard.Services.Tasks.Infrastructure.Services;
 
 public class AttachmentService
 {
@@ -98,9 +99,7 @@ public class AttachmentService
             var downloadUrl = await _storageService.GetPresignedDownloadUrlAsync(
                 storagePath, TimeSpan.FromDays(7));
 
-            _logger.LogInformation(
-                "Attachment {AttachmentId} uploaded for task {TaskId}",
-                attachment.Id, taskId);
+            _logger.LogInformation("Attachment {AttachmentId} uploaded for task {TaskId}", attachment.Id, taskId);
 
             return Result<UploadAttachmentResponse>.Success(new UploadAttachmentResponse(
                 attachment.Id,
@@ -161,6 +160,49 @@ public class AttachmentService
         {
             _logger.LogError(ex, "Error retrieving attachments for task {TaskId}", taskId);
             return Result<IEnumerable<AttachmentDto>>.Failure("Failed to retrieve attachments");
+        }
+    }
+
+    public async Task<Result<AttachmentDto>> GetAttachmentByIdAsync(Guid attachmentId)
+    {
+        try
+        {
+            var attachment = await _context.Set<Attachment>()
+                .AsNoTracking()
+                .Where(a => a.Id == attachmentId)
+                .FirstOrDefaultAsync();
+
+            var downloadUrl = await _storageService.GetPresignedDownloadUrlAsync(
+                    attachment.StoragePath, TimeSpan.FromHours(1));
+
+            string? thumbnailUrl = null;
+            if (attachment.ThumbnailPath != null)
+            {
+                thumbnailUrl = await _storageService.GetPresignedDownloadUrlAsync(
+                    attachment.ThumbnailPath, TimeSpan.FromHours(1));
+            }
+
+            var attachmentDto = new AttachmentDto(
+                attachment.Id,
+                attachment.FileName,
+                attachment.ContentType,
+                attachment.FileSize,
+                attachment.Description,
+                attachment.TaskItemId,
+                attachment.CommentId,
+                attachment.UploadedByUserId,
+                attachment.UploadedAt,
+                downloadUrl,
+                thumbnailUrl,
+                attachment.IsImage
+            );
+
+            return Result<AttachmentDto>.Success(attachmentDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving attachment {AttachmentId}", attachmentId);
+            return Result<AttachmentDto>.Failure("Failed to retrieve attachment");
         }
     }
 

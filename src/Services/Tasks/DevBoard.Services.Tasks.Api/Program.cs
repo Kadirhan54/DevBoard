@@ -1,6 +1,7 @@
 ﻿using DevBoard.Services.Tasks.Api.Consumers;
 using DevBoard.Services.Tasks.Api.Services;
 using DevBoard.Services.Tasks.Infrastructure.Data;
+using DevBoard.Services.Tasks.Infrastructure.Extensions;
 using DevBoard.Services.Tasks.Infrastructure.HttpClients;
 using DevBoard.Services.Tasks.Infrastructure.Seed;
 using DevBoard.Shared.Common;
@@ -15,13 +16,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
+// Swagger
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -87,6 +85,9 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+// Add MinIO and File Upload Settings
+builder.Services.AddMinIOStorageAndFileUploadSettings(builder.Configuration);
+
 // Services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantProvider,TenantProvider>();
@@ -99,6 +100,12 @@ builder.Services.AddHttpClient<IProjectServiceClient, ProjectServiceClient>(clie
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
+// TODO : Implement Identity Service 
+//builder.Services.AddHttpClient<IIdentityServiceClient, IdentityServiceClient>(client =>
+//{
+//    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService:Url"]!);
+//    client.Timeout = TimeSpan.FromSeconds(5);
+//});
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -124,6 +131,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+
+
 
 var app = builder.Build();
 

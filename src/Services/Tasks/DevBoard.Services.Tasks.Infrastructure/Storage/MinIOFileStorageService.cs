@@ -2,13 +2,13 @@
 // FILE: Services/Tasks/DevBoard.Services.Tasks.Infrastructure/Storage/MinIOFileStorageService.cs
 // ============================================================================
 
+using DevBoard.Services.Tasks.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Minio;
 using Minio.DataModel.Args;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace DevBoard.Services.Tasks.Infrastructure.Storage;
 
@@ -16,12 +16,12 @@ public class MinIOFileStorageService : IFileStorageService
 {
     private readonly IMinioClient _minioClient;
     private readonly MinIOSettings _settings;
-    private readonly ILogger<MinIOFileStorageService> _logger;
+    private readonly ILogger<AttachmentService> _logger;
 
     public MinIOFileStorageService(
         IMinioClient minioClient,
         MinIOSettings settings,
-        ILogger<MinIOFileStorageService> logger)
+        ILogger<AttachmentService> logger)
     {
         _minioClient = minioClient;
         _settings = settings;
@@ -40,6 +40,7 @@ public class MinIOFileStorageService : IFileStorageService
             // Ensure bucket exists
             await EnsureBucketExistsAsync(cancellationToken);
 
+            // TODO : change Guid.NewGuid to actual attachment ID.
             // Generate storage path: {tenantId}/{resourceType}/{resourceId}/{fileName}
             var sanitizedFileName = SanitizeFileName(file.FileName);
             var storagePath = $"{tenantId}/{resourceType}/{resourceId}/{Guid.NewGuid()}_{sanitizedFileName}";
@@ -56,9 +57,7 @@ public class MinIOFileStorageService : IFileStorageService
 
             await _minioClient.PutObjectAsync(putObjectArgs, cancellationToken);
 
-            _logger.LogInformation(
-                "Uploaded file {FileName} to {StoragePath}",
-                file.FileName, storagePath);
+            _logger.LogInformation("Uploaded file {FileName} to {StoragePath}", file.FileName, storagePath);
 
             return storagePath;
         }
