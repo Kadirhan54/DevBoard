@@ -1,27 +1,138 @@
+# version: "3.9"
+
+# services:
+#   db:
+#     image: postgres:16   # ✅ use postgres:16 or 17 (18 doesn’t exist yet)
+#     container_name: devboard-db
+#     restart: always
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: kado
+#       POSTGRES_DB: devboarddb
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - pgdata:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+#       start_period: 10s
+#     networks:
+#       - devboard-network
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     container_name: devboard-rabbitmq
+#     restart: always
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     environment:
+#       RABBITMQ_DEFAULT_USER: guest
+#       RABBITMQ_DEFAULT_PASS: guest
+#     networks:
+#       - devboard-network
+
+#   api:
+#     build:
+#       context: .
+#       dockerfile: src/DevBoard.Api/Dockerfile
+#     container_name: devboard-api
+#     environment:
+#       ASPNETCORE_ENVIRONMENT: "Development"
+#       ConnectionStrings__DevBoardDatabase: "Host=db;Port=5432;Database=devboarddb;Username=postgres;Password=kado;Include Error Detail=true"
+#       RabbitMQ__Host: "rabbitmq"
+#       RabbitMQ__Username: "guest"
+#       RabbitMQ__Password: "guest"
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_started   # ✅ proper syntax
+#     networks:
+#       - devboard-network
+
+# networks:
+#   devboard-network:
+
+# volumes:
+#   pgdata:
+
 version: "3.9"
 
 services:
-  db:
-    image: postgres:16   # ✅ use postgres:16 or 17 (18 doesn’t exist yet)
-    container_name: devboard-db
+  # ============================================================================
+  # DATABASES
+  # ============================================================================
+  
+  identity-db:
+    image: postgres:16
+    container_name: devboard-identity-db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: kado
-      POSTGRES_DB: devboarddb
+      POSTGRES_DB: identity_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - identity-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
     networks:
       - devboard-network
 
+  project-db:
+    image: postgres:16
+    container_name: devboard-project-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kado
+      POSTGRES_DB: project_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - project-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devboard-network
+
+  task-db:
+    image: postgres:16
+    container_name: devboard-task-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kado
+      POSTGRES_DB: task_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - task-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devboard-network
+
+  # ============================================================================
+  # MESSAGE BROKER
+  # ============================================================================
+  
   rabbitmq:
     image: rabbitmq:3-management
     container_name: devboard-rabbitmq
@@ -32,32 +143,193 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - devboard-network
 
-  api:
+  # ============================================================================
+  # BLOB STORAGE (MinIO - S3 Compatible)
+  # ============================================================================
+  
+  minio:
+    image: minio/minio:latest
+    container_name: devboard-minio
+    restart: always
+    ports:
+      - "9000:9000"      # API
+      - "9001:9001"      # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - devboard-network
+
+  # ============================================================================
+  # MICROSERVICES
+  # ============================================================================
+  
+  identity-service:
     build:
       context: .
-      dockerfile: src/DevBoard.Api/Dockerfile
-    container_name: devboard-api
+      dockerfile: src/Services/Identity/DevBoard.Services.Identity.Api/Dockerfile
+    container_name: devboard-identity-service
+    restart: always
+    ports:
+      - "5001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DevBoardDatabase: "Host=db;Port=5432;Database=devboarddb;Username=postgres;Password=kado;Include Error Detail=true"
+      ConnectionStrings__IdentityDatabase: "Host=identity-db;Port=5432;Database=identity_db;Username=postgres;Password=kado"
       RabbitMQ__Host: "rabbitmq"
       RabbitMQ__Username: "guest"
       RabbitMQ__Password: "guest"
-    ports:
-      - "8080:8080"
+      Jwt__Key: "e9f8b1bfe4a3d8f2c7a91c04ef9c59d6e79a5a2b91f4a87b832a45df8b1e27d0"
+      Jwt__Issuer: "DevBoard.Identity"
+      Jwt__Audience: "DevBoard.Users"
+      Jwt__ExpiresInMinutes: "60"
     depends_on:
-      db:
+      identity-db:
         condition: service_healthy
       rabbitmq:
-        condition: service_started   # ✅ proper syntax
+        condition: service_healthy
+    networks:
+      - devboard-network
+
+  project-service:
+    build:
+      context: .
+      dockerfile: src/Services/Projects/DevBoard.Services.Projects.Api/Dockerfile
+    container_name: devboard-project-service
+    restart: always
+    ports:
+      - "5002:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__ProjectDatabase: "Host=project-db;Port=5432;Database=project_db;Username=postgres;Password=kado"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      Jwt__Key: "e9f8b1bfe4a3d8f2c7a91c04ef9c59d6e79a5a2b91f4a87b832a45df8b1e27d0"
+      Jwt__Issuer: "DevBoard.Identity"
+      Jwt__Audience: "DevBoard.Users"
+      Services__IdentityService__Url: "http://identity-service:8080"
+    depends_on:
+      project-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+    networks:
+      - devboard-network
+
+  task-service:
+    build:
+      context: .
+      dockerfile: src/Services/Tasks/DevBoard.Services.Tasks.Api/Dockerfile
+    container_name: devboard-task-service
+    restart: always
+    ports:
+      - "5003:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__TaskDatabase: "Host=task-db;Port=5432;Database=task_db;Username=postgres;Password=kado"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      Jwt__Key: "e9f8b1bfe4a3d8f2c7a91c04ef9c59d6e79a5a2b91f4a87b832a45df8b1e27d0"
+      Jwt__Issuer: "DevBoard.Identity"
+      Jwt__Audience: "DevBoard.Users"
+      Services__ProjectService__Url: "http://project-service:8080"
+      Services__IdentityService__Url: "http://identity-service:8080"
+      MinIO__Endpoint: "minio:9000"
+      MinIO__AccessKey: "minioadmin"
+      MinIO__SecretKey: "minioadmin"
+      MinIO__BucketName: "task-attachments"
+    depends_on:
+      task-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      project-service:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    networks:
+      - devboard-network
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/Services/Notifications/DevBoard.Services.Notifications.Api/Dockerfile
+    container_name: devboard-notification-service
+    restart: always
+    ports:
+      - "5004:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      Services__IdentityService__Url: "http://identity-service:8080"
+      Email__SmtpHost: "smtp.gmail.com"
+      Email__SmtpPort: "587"
+      Email__Username: "your-email@gmail.com"
+      Email__Password: "your-app-password"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+    networks:
+      - devboard-network
+
+  # ============================================================================
+  # API GATEWAY (YARP)
+  # ============================================================================
+  
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateway/DevBoard.ApiGateway/Dockerfile
+    container_name: devboard-api-gateway
+    restart: always
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      Jwt__Key: "e9f8b1bfe4a3d8f2c7a91c04ef9c59d6e79a5a2b91f4a87b832a45df8b1e27d0"
+      Jwt__Issuer: "DevBoard.Identity"
+      Jwt__Audience: "DevBoard.Users"
+      Services__IdentityService__Url: "http://identity-service:8080"
+      Services__ProjectService__Url: "http://project-service:8080"
+      Services__TaskService__Url: "http://task-service:8080"
+      Services__NotificationService__Url: "http://notification-service:8080"
+    depends_on:
+      - identity-service
+      - project-service
+      - task-service
+      - notification-service
     networks:
       - devboard-network
 
 networks:
   devboard-network:
+    driver: bridge
 
 volumes:
-  pgdata:
+  identity-db-data:
+  project-db-data:
+  task-db-data:
+  minio-data:
