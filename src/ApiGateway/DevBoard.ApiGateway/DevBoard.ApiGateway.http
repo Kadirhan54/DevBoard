@@ -1,0 +1,6 @@
+@DevBoard.ApiGateway_HostAddress = http://localhost:5250
+
+GET {{DevBoard.ApiGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

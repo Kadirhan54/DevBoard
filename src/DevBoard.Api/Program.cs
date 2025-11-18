@@ -82,9 +82,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+builder.Services.AddDbContext<ApplicationDbContext>((options) =>
 {
-    var tenantProvider = serviceProvider.GetRequiredService<ITenantProvider>();
     options.UseNpgsql(builder.Configuration.GetConnectionString("DevBoardDatabase"));
     options.EnableSensitiveDataLogging(); // optional
 });
